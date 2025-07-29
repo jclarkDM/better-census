@@ -9,7 +9,7 @@ The US Census API is slow, clunky, and unreliable. This is my manifesto.
 - Encoders for converting human-readable keys into Census IDs, e.g. `Census.encoder.housing.median.rent()` -> `"B25064_001E"`
 
 ## Setup
-This repository includes a zip file with common Census demographic data, including
+This repository includes [zip files in the releases section](https://github.com/jclarkDM/better-census/releases/tag/data) with common Census demographic data, including
 - Age by race
 - Housing data:
   - Average rent
