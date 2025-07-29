@@ -43,12 +43,6 @@ type KeyToValue<IDs extends [key: string, id: string][]> = {
   >[1]
 }
 
-const test = createIdSet([
-  ["alpha", "a"],
-  ["beta", "b"],
-  ["gamma", "c"]
-]);
-
 export type RemoveDuplicates<T extends readonly unknown[], Acc extends readonly unknown[] = []> =
   T extends readonly [infer Head, ...infer Tail]
   ? Head extends Acc[number]
@@ -62,7 +56,7 @@ export type MapIDSet<
   EmptyDefault extends string[] = [],
   DedupedKeys = RemoveDuplicates<Keys>
 > = Keys[number] extends never ? EmptyDefault : {
-  [X in keyof DedupedKeys]: IDSet["$map"][DedupedKeys[X] & IDSet["$keys"]]
+  [X in keyof DedupedKeys]: IDSet["$map"][DedupedKeys[X] & IDSet["$keys"]] & { __id: DedupedKeys[X] }
 }
 
 export function createIdQuery<

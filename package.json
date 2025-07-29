@@ -1,5 +1,5 @@
 {
-  "name": "duck-census",
+  "name": "@jclark/better-census",
   "module": "index.ts",
   "type": "module",
   "private": true,
