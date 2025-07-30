@@ -72,8 +72,9 @@ export abstract class Encoder<
     return new StaticEncoder(mapping);
   }
 
-  static proxy<const Items extends Encoder.RootRecord>(definition: EncoderRoot<Items>) {
-    return createEncoderQuery(new EncoderRoot(definition.items));
+  static proxy<const Items extends Encoder.RootRecord>(definition: EncoderRoot<Items> | Items) {
+    if(definition instanceof EncoderRoot) return createEncoderQuery(definition);
+    return createEncoderQuery(new EncoderRoot(definition));
   }
 }
 
