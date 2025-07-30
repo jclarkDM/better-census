@@ -1,7 +1,8 @@
 import { createIdQuery, createIdSet } from "../util/ids";
 
 function units() {
-  return ["B25001_001E"] as const;
+  const id = "B25001_001E";
+  return [id] as [typeof id];
 }
 
 const occupiedStatus = createIdSet([
@@ -28,7 +29,8 @@ const vacant = createIdQuery(vacantStatus, ["B25004_001E"]);
 units.vacant = vacant;
 
 function rent() {
-  return ["B25064_001E"] as const;
+  const id = "B25064_001E";
+  return [id] as [typeof id];
 }
 
 const homeValueDecade = createIdSet([
