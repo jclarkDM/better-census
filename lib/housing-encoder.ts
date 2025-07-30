@@ -1,4 +1,4 @@
-import { createIdQuery, createIdSet } from "./util";
+import { createIdQuery, createIdSet } from "../util/ids";
 
 function units() {
   return ["B25001_001E"] as const;

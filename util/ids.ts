@@ -1,27 +1,25 @@
 
-export function transpose(obj: Record<string, any>) {
-  const result = {}
+type KeyToValue<IDs extends [key: string, id: string][]> = {
+  [K in IDs[number][0]]: Extract<
+    IDs[number],
+    [K, any]
+  >[1]
+}
 
-  for(const outerKey in obj) {
-    if(obj.hasOwnProperty(outerKey)) {
-      const inner = obj[outerKey];
+type RemoveDuplicates<T extends readonly unknown[], Acc extends readonly unknown[] = []> =
+  T extends readonly [infer Head, ...infer Tail]
+  ? Head extends Acc[number]
+    ? RemoveDuplicates<Tail extends readonly unknown[] ? Tail : [], Acc>
+    : RemoveDuplicates<Tail extends readonly unknown[] ? Tail : [], [...Acc, Head]>
+  : Acc;
 
-      for(const innerKey in inner) {
-        if(inner.hasOwnProperty(innerKey)) {
-          // @ts-expect-error
-          if(!result[innerKey]) {
-            // @ts-expect-error
-            result[innerKey] = {};
-          }
-          
-          // @ts-expect-error
-          result[innerKey][outerKey] = inner[innerKey];
-        }
-      }
-    }
-  }
-
-  return result;
+type MapIDSet<
+  IDSet extends ReturnType<typeof createIdSet<[key: string, id: string][]>>,
+  Keys extends readonly IDSet["$keys"][],
+  EmptyDefault extends string[] = [],
+  DedupedKeys = RemoveDuplicates<Keys>
+> = Keys[number] extends never ? EmptyDefault : {
+  [X in keyof DedupedKeys]: IDSet["$map"][DedupedKeys[X] & IDSet["$keys"]]
 }
 
 export function createIdSet<
@@ -34,29 +32,6 @@ export function createIdSet<
     $values: null! as IDs[number][1],
     $map: null! as KeyToValue<IDs>
   }
-}
-
-type KeyToValue<IDs extends [key: string, id: string][]> = {
-  [K in IDs[number][0]]: Extract<
-    IDs[number],
-    [K, any]
-  >[1]
-}
-
-export type RemoveDuplicates<T extends readonly unknown[], Acc extends readonly unknown[] = []> =
-  T extends readonly [infer Head, ...infer Tail]
-  ? Head extends Acc[number]
-    ? RemoveDuplicates<Tail extends readonly unknown[] ? Tail : [], Acc>
-    : RemoveDuplicates<Tail extends readonly unknown[] ? Tail : [], [...Acc, Head]>
-  : Acc;
-
-export type MapIDSet<
-  IDSet extends ReturnType<typeof createIdSet<[key: string, id: string][]>>,
-  Keys extends readonly IDSet["$keys"][],
-  EmptyDefault extends string[] = [],
-  DedupedKeys = RemoveDuplicates<Keys>
-> = Keys[number] extends never ? EmptyDefault : {
-  [X in keyof DedupedKeys]: IDSet["$map"][DedupedKeys[X] & IDSet["$keys"]] & { __id: DedupedKeys[X] }
 }
 
 export function createIdQuery<

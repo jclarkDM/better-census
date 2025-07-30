@@ -1,6 +1,6 @@
 import { connection } from "../etl/init";
 import { housingEncoder } from "./housing-encoder";
-import { transpose } from "./util";
+import { transpose } from "../util/object";
 
 export namespace Census {
   export interface RunOptions<
