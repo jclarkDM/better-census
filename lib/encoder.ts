@@ -22,11 +22,11 @@ export namespace Encoder {
   export type Proxy<Enc extends Encoder.RootRecord, Path extends string[] = []> = {
     [K in keyof Enc & string]:
       Enc[K] extends Encoder.RootRecord & { default: StaticEncoder<infer Mapping> }
-        ? (() => Mapping[number][1]) & Encoder.Proxy<Omit<Enc[K], "default">, [...Path, K]>
+        ? (() => [EncodedItem<Mapping[number][1], String.CamelCase<[...Path, K]>>]) & Encoder.Proxy<Omit<Enc[K], "default">, [...Path, K]>
         : Enc[K] extends RootRecord
           ? Encoder.Proxy<Enc[K], [...Path, K]>
         : Enc[K] extends StaticEncoder<infer Mapping>
-          ? () => Mapping[number][1]
+          ? () => [EncodedItem<Mapping[number][1], String.CamelCase<[...Path, K]>>]
         : Enc[K] extends OptionsEncoder<infer Mapping extends Encoder.Mapping[], infer DefaultValue extends string | undefined>
           ? (<const I extends Mapping[number][0][], Deduped = RemoveDuplicates<I>>(...keys: I) => I["length"] extends 0
             ? undefined extends DefaultValue
@@ -118,7 +118,7 @@ function createEncoderQuery<
       if(value && typeof value === "object" && !(value instanceof Encoder)) {
         if("default" in value && value.default instanceof StaticEncoder) {
           proxy[key] = Object.assign(
-            () => value.default.mapping[0][1],
+            () => [{ id: value.default.mapping[0][1], label: toCamelCase([...path, key]) }],
             buildProxy(
               Object.fromEntries(
                 Object.entries(value)
