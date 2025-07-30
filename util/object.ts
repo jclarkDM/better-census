@@ -1,5 +1,8 @@
 
-export function transpose(obj: Record<string, any>) {
+export function transpose<
+  const T extends Record<string, any>,
+  const K extends Record<string, T>
+>(obj: K) { 
   const result = {}
 
   for(const outerKey in obj) {
@@ -21,5 +24,9 @@ export function transpose(obj: Record<string, any>) {
     }
   }
 
-  return result;
+  return result as {
+    [A in keyof K[keyof K]]: {
+      [B in keyof K]: K[B][A]
+    }
+  }
 }
