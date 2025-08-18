@@ -92,6 +92,11 @@ export class Census<Enc extends Encoder.RootRecord> {
     const queryService = new LocalDBQueryService(connection);
     return new Census(queryService, { ...opts });
   }
+  
+  static async createRemote(url: string, opts?: ConstructorProps<Encoder.RootRecord>){
+    const queryService = new RemoteDBQueryService(url);
+    return new Census(queryService, { ...opts });
+  }
 
   async run<
     const GeoIDs extends string[] = [],
