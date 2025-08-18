@@ -49,16 +49,16 @@ export class Census<Enc extends Encoder.RootRecord> {
     const RawIds extends boolean = false
   >(options: Census.RunOptions<GeoIDs, ColumnIDs, Transpose, RawIds>): Promise<Census.RunResult<GeoIDs, ColumnIDs, Transpose, RawIds>> {
     const q = `
-select ${options.columns.map(item => {
-  if(typeof item === "string") return `"${item}"`;
+      select ${options.columns.map(item => {
+        if(typeof item === "string") return `"${item}"`;
 
-  if(options.rawIds) {
-    return `"${item.id}"`;
-  } else {
-    return `"${item.id}" as "${item.label}"`;
-  }
-})} from data
-where id in (${options.places.map(id => `'${id}'`).join(", ")});
+        if(options.rawIds) {
+          return `"${item.id}"`;
+        } else {
+          return `"${item.id}" as "${item.label}"`;
+        }
+      })} from data
+      where id in (${options.places.map(id => `'${id}'`).join(", ")});
     `;
 
     const result = await connection.runAndReadAll(q);
