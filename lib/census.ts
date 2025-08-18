@@ -1,7 +1,7 @@
-import type { DuckDBConnection, JS } from "@duckdb/node-api";
 import { initializeDB } from "../etl/init";
 import { transpose } from "../util/object";
 import { Encoder } from "./encoder";
+import { LocalDBQueryService, RemoteDBQueryService, type DBQueryService } from "./queries";
 
 export namespace Census {
   export interface RunOptions<
@@ -32,48 +32,8 @@ export namespace Census {
   }
 }
 
-interface DBQueryService {
-  query(q: string): Promise<Record<string, JS>[]>;
-}
+type ConstructorProps<Enc extends Encoder.RootRecord> = { items?: Enc };
 
-class LocalDBQueryService implements DBQueryService {
-  private connection: DuckDBConnection;
-
-  constructor(connection: DuckDBConnection) {
-    this.connection = connection;
-  }
-
-  async query(q: string) {
-    const result = await this.connection.runAndReadAll(q);
-    const rows = result.getRowObjectsJS();
-    return rows;
-  }
-}
-
-class RemoteDBQueryService implements DBQueryService {
-  private url: string;
-
-  constructor(url: string) {
-    this.url = url;
-  }
-
-  async query(q: string) {
-    const response = await fetch(this.url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: q,
-    });
-
-    if (!response.ok) throw new Error(`Failed to fetch data from ${this.url}: ${response.statusText}`);
-
-    const data = await response.json();
-    return data as Record<string, JS>[];
-  }
-}
-
-type ConstructorProps<Enc extends Encoder.RootRecord> = {
-  items?: Enc;
-};
 export class Census<Enc extends Encoder.RootRecord> {
   private queryService: DBQueryService;
   private internalEncoder: Enc | undefined;
