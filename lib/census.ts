@@ -1,4 +1,5 @@
-import { connection } from "../etl/init";
+import type { DuckDBConnection } from "@duckdb/node-api";
+import { initializeDB } from "../etl/init";
 import { transpose } from "../util/object";
 import { Encoder } from "./encoder";
 
@@ -31,15 +32,26 @@ export namespace Census {
   }
 }
 
+type ConstructorProps<Enc extends Encoder.RootRecord> = {
+  items?: Enc;
+  db?: DuckDBConnection;
+};
 export class Census<Enc extends Encoder.RootRecord> {
   private internalEncoder: Enc | undefined;
-
-  constructor(opts?: { items?: Enc }) {
+  private dbConnection: DuckDBConnection | undefined;
+  
+  constructor(opts?: ConstructorProps<Enc>) {
     this.internalEncoder = opts?.items;
+    this.dbConnection = opts?.db;
   }
 
   get encoder() {
     return Encoder.proxy(this.internalEncoder ?? {});
+  }
+  
+  static async createLocal<Enc extends Encoder.RootRecord>(opts?: ConstructorProps<Enc>){
+    const db = await initializeDB();
+    return new Census({ db, ...opts });
   }
 
   async run<
@@ -92,7 +104,9 @@ export class Census<Enc extends Encoder.RootRecord> {
   }
   
   async query(q: string){
-    const result = await connection.runAndReadAll(q);
+    if (!this.dbConnection) throw new Error("No database connection found");
+    
+    const result = await this.dbConnection.runAndReadAll(q);
     const rows = result.getRowObjectsJS();
     
     return rows;
