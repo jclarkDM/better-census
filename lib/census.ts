@@ -61,12 +61,9 @@ export class Census<Enc extends Encoder.RootRecord> {
       where id in (${options.places.map(id => `'${id}'`).join(", ")});
     `;
 
-    const result = await connection.runAndReadAll(q);
-
-    const rows = result.getRowObjectsJS();
+    const rows = await this.query(q);
     const output = Object.fromEntries(rows.map((row, i) => {
       const id = options.places[i];
-
       return [id, row];
     }));
 
@@ -92,5 +89,12 @@ export class Census<Enc extends Encoder.RootRecord> {
     }
 
     return output;
+  }
+  
+  async query(q: string){
+    const result = await connection.runAndReadAll(q);
+    const rows = result.getRowObjectsJS();
+    
+    return rows;
   }
 }
