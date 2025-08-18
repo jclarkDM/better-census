@@ -32,14 +32,14 @@ export namespace Census {
 }
 
 export class Census<Enc extends Encoder.RootRecord> {
-  private internalEncoder: Enc;
+  private internalEncoder: Enc | undefined;
 
-  constructor(encoder: { items: Enc }) {
-    this.internalEncoder = encoder.items;
+  constructor(opts?: { items?: Enc }) {
+    this.internalEncoder = opts?.items;
   }
 
   get encoder() {
-    return Encoder.proxy(this.internalEncoder);
+    return Encoder.proxy(this.internalEncoder ?? {});
   }
 
   async run<
