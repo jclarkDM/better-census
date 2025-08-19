@@ -37,7 +37,7 @@ type ConstructorProps<Enc extends Encoder.RootRecord> = { items?: Enc };
 export class Census<Enc extends Encoder.RootRecord> {
   private queryService: DBQueryService;
   private internalEncoder: Enc | undefined;
-  
+
   constructor(queryService: DBQueryService, opts?: ConstructorProps<Enc>) {
     this.queryService = queryService;
     this.internalEncoder = opts?.items;
@@ -46,16 +46,40 @@ export class Census<Enc extends Encoder.RootRecord> {
   get encoder() {
     return Encoder.proxy(this.internalEncoder ?? {});
   }
-  
-  static async createLocal<Enc extends Encoder.RootRecord>(opts?: ConstructorProps<Enc>){
+
+  static async createLocal<Enc extends Encoder.RootRecord>(opts?: ConstructorProps<Enc>) {
     const connection = await initializeDB();
     const queryService = new LocalDBQueryService(connection);
     return new Census(queryService, { ...opts });
   }
-  
-  static async createRemote(url: string, opts?: ConstructorProps<Encoder.RootRecord>){
+
+  static async createRemote(url: string, opts?: ConstructorProps<Encoder.RootRecord>) {
     const queryService = new RemoteDBQueryService(url);
     return new Census(queryService, { ...opts });
+  }
+
+  static async startServer(opts?: { port: number }) {
+    const connection = await initializeDB();
+    const dbService = new LocalDBQueryService(connection);
+
+    const server = Bun.serve({
+      port: opts?.port ?? 3000,
+      async fetch(req) {
+        if (req.method === "POST") {
+          const body = await req.text();
+          if (!body) return new Response("No body provided", { status: 400 });
+
+          const response = await dbService.query(body);
+          return new Response(JSON.stringify(response), { headers: { "Content-Type": "application/json" } });
+        }
+
+        return new Response("OK!", { status: 200 });
+      },
+    });
+    
+    console.log(`Server started at http://${server.hostname}:${server.port}`);
+
+    return server;
   }
 
   async run<
@@ -65,42 +89,44 @@ export class Census<Enc extends Encoder.RootRecord> {
     const RawIds extends boolean = false
   >(options: Census.RunOptions<GeoIDs, ColumnIDs, Transpose, RawIds>): Promise<Census.RunResult<GeoIDs, ColumnIDs, Transpose, RawIds>> {
     const q = `
-      select ${options.columns.map(item => {
-        if(typeof item === "string") return `"${item}"`;
+      select ${options.columns.map((item) => {
+        if (typeof item === "string") return `"${item}"`;
 
-        if(options.rawIds) {
+        if (options.rawIds) {
           return `"${item.id}"`;
         } else {
           return `"${item.id}" as "${item.label}"`;
         }
       })} from data
-      where id in (${options.places.map(id => `'${id}'`).join(", ")});
+      where id in (${options.places.map((id) => `'${id}'`).join(", ")});
     `;
 
     const rows = await this.queryService.query(q);
-    const output = Object.fromEntries(rows.map((row, i) => {
-      const id = options.places[i];
-      return [id, row];
-    }));
+    const output = Object.fromEntries(
+      rows.map((row, i) => {
+        const id = options.places[i];
+        return [id, row];
+      })
+    );
 
-    for(const id of options.columns) {
-      for(const place of options.places) {
+    for (const id of options.columns) {
+      for (const place of options.places) {
         // const label = typeof id === "string" ? id : options.rawIds ? id.id : id.label;
         let label;
-        if(typeof id === "string") {
+        if (typeof id === "string") {
           label = id;
-        } else if(options.rawIds) {
+        } else if (options.rawIds) {
           label = id.id;
         } else {
           label = id.label;
         }
-        if(output[place] && output[place][label] == undefined) {
+        if (output[place] && output[place][label] == undefined) {
           output[place][label] = null;
         }
       }
     }
 
-    if(options.transpose) {
+    if (options.transpose) {
       return transpose(output) as any;
     }
 
