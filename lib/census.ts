@@ -63,8 +63,7 @@ export class Census<Enc extends Encoder.RootRecord> {
   }
 
   static async startServer(opts?: { port: number }) {
-    const connection = await initializeDB();
-    const queryService = new LocalDBQueryService(connection);
+    const census = await Census.createLocal();
 
     const server = Bun.serve({
       port: opts?.port ?? 3000,
@@ -73,7 +72,7 @@ export class Census<Enc extends Encoder.RootRecord> {
           const body = await req.text();
           if (!body) return new Response("No body provided", { status: 400 });
 
-          const response = await queryService.query(body);
+          const response = await census.queryService.query(body);
           return new Response(JSON.stringify(response), { headers: { "Content-Type": "application/json" } });
         }
 
