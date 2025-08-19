@@ -35,16 +35,20 @@ export namespace Census {
 type ConstructorProps<Enc extends Encoder.RootRecord> = { items?: Enc };
 
 export class Census<Enc extends Encoder.RootRecord> {
-  private queryService: DBQueryService;
+  private internalQueryService: DBQueryService;
   private internalEncoder: Enc | undefined;
 
   constructor(queryService: DBQueryService, opts?: ConstructorProps<Enc>) {
-    this.queryService = queryService;
+    this.internalQueryService = queryService;
     this.internalEncoder = opts?.items;
   }
 
   get encoder() {
     return Encoder.proxy(this.internalEncoder ?? {});
+  }
+  
+  get queryService() {
+    return this.internalQueryService;
   }
 
   static async createLocal<Enc extends Encoder.RootRecord>(opts?: ConstructorProps<Enc>) {
@@ -60,7 +64,7 @@ export class Census<Enc extends Encoder.RootRecord> {
 
   static async startServer(opts?: { port: number }) {
     const connection = await initializeDB();
-    const dbService = new LocalDBQueryService(connection);
+    const queryService = new LocalDBQueryService(connection);
 
     const server = Bun.serve({
       port: opts?.port ?? 3000,
@@ -69,7 +73,7 @@ export class Census<Enc extends Encoder.RootRecord> {
           const body = await req.text();
           if (!body) return new Response("No body provided", { status: 400 });
 
-          const response = await dbService.query(body);
+          const response = await queryService.query(body);
           return new Response(JSON.stringify(response), { headers: { "Content-Type": "application/json" } });
         }
 
@@ -101,7 +105,7 @@ export class Census<Enc extends Encoder.RootRecord> {
       where id in (${options.places.map((id) => `'${id}'`).join(", ")});
     `;
 
-    const rows = await this.queryService.query(q);
+    const rows = await this.internalQueryService.query(q);
     const output = Object.fromEntries(
       rows.map((row, i) => {
         const id = options.places[i];
