@@ -5,64 +5,47 @@ import { separateLine } from "../util/csv";
 import { separateLine as separateLineDat } from "../util/dat";
 import { initializeDB } from "./init";
 
+const BASE_PATH = "./data/raw/";
+const BATCH_SIZE = 4000;
 const connection = await initializeDB();
-const basePath = "./data/raw/";
+
+// const ids = await getAllIds();
+// await setupTable(ids);
+// await loadAll();
+
+const ids = await getAllIds();
+await setupTable(ids);
+// await loadAllDat();
+
+// 
 
 export async function getAllIds() {
-  const files = await glob(`${basePath}/**/*.csv`)
-    .then(f => f.map(file => file
-      .replace(basePath, "")
-      .replace(/\.csv$/, "")));
-  
-  const ids = new Set<string>();
+  const files = await glob(`${BASE_PATH}/**/*.{csv,dat}`).then((f) => f.map((file) => file.replace(BASE_PATH, "")));
 
-  for(const file of files) {
-    const csv = Bun.file(path.join(`${basePath}/${file}.csv`)).stream();
-    const lineStream = createLineStream(csv);
+  const ids = new Set<string>();
+  for (const fileName of files) {
+    const fileType = getFileType(fileName);
+    if (fileType === "unknown") continue;
+    
+    const fileStream = Bun.file(path.join(`${BASE_PATH}/${fileName}`)).stream();
+    const lineStream = createLineStream(fileStream);
 
     const firstLine = await lineStream.next();
-    if(!firstLine.value) continue;
-
-    const split = separateLine(firstLine.value)
-      .filter(id => id.endsWith("E") && id !== "NAME");
+    if (!firstLine.value) continue;
     
-    split.forEach(id => ids.add(id));
+    const split = extractEstimateColumns(firstLine.value, fileType);
+    split.forEach((id) => ids.add(id));
   }
 
   return ids;
 }
-
-export async function getAllDatIds() {
-  const files = await glob(`${basePath}/**/*.dat`)
-    .then(f => f.map(file => file
-      .replace(basePath, "")
-      .replace(/\.dat$/, "")));
-  
-  const ids = new Set<string>();
-
-  for(const file of files) {
-    const csv = Bun.file(path.join(`${basePath}/${file}.dat`)).stream();
-    const lineStream = createLineStream(csv);
-
-    const firstLine = await lineStream.next();
-    if(!firstLine.value) continue;
-
-    const split = separateLineDat(firstLine.value)
-      .filter(id => id.includes("_E") && id !== "NAME");
-    
-    split.forEach(id => ids.add(id));
-  }
-
-  return ids;
-}
-
 
 export async function setupTable(ids: Set<string>) {  
   const q = `
-create or replace table data (
-  id text primary key,
-  ${[...ids].map(id => `"${id}" real`).join(",\n  ")}
-);
+    create or replace table data (
+    id text primary key,
+    ${[...ids].map(id => `"${id}" real`).join(",\n  ")}
+    );
   `;
 
   console.log(q);
@@ -71,10 +54,8 @@ create or replace table data (
   await connection.run(q);
 }
 
-const BATCH_SIZE = 4000;
-
 export async function loadAllDat(){
-  const files = await glob(`${basePath}/**/*.dat`);
+  const files = await glob(`${BASE_PATH}/**/*.dat`);
   for(const file of files) {
     const index = files.indexOf(file);
     console.log(`Loading ${index + 1}/${files.length}: ${file}`);
@@ -140,7 +121,7 @@ export async function loadAllDat(){
 }
 
 export async function loadAll() {
-  const files = await glob(`${basePath}/**/*.csv`);
+  const files = await glob(`${BASE_PATH}/**/*.csv`);
 
   for(const file of files) {
     const index = files.indexOf(file);
@@ -203,10 +184,19 @@ on conflict (id) do update set
   }
 }
 
-// const ids = await getAllIds();
-// await setupTable(ids);
-// await loadAll();
+// 
 
-const ids = await getAllDatIds();
-await setupTable(ids);
-await loadAllDat();
+function extractEstimateColumns(line: string, fileType: "csv" | "dat") {
+  switch (fileType) {
+    case "csv":
+      return separateLine(line).filter((id) => id.endsWith("E") && id !== "NAME");
+    case "dat":
+      return separateLineDat(line).filter((id) => id.includes("_E") && id !== "NAME");
+  }
+}
+
+function getFileType(file: string) {
+  if (file.endsWith(".csv")) return "csv";
+  if (file.endsWith(".dat")) return "dat";
+  return "unknown";
+}
