@@ -1,9 +1,19 @@
-import path from "node:path";
 import glob from "fast-glob";
-import { createLineStream } from "../util/stream";
+import path from "node:path";
+import { parseArgs } from "util";
 import { separateLine as separateLineCSV } from "../util/csv";
 import { separateLine as separateLineDat } from "../util/dat";
+import { createLineStream } from "../util/stream";
 import { initializeDB } from "./init";
+
+const { values:argValues } = parseArgs({
+  args: Bun.argv,
+  options: {
+    geoid: { type: "string" },
+  },
+  strict: true,
+  allowPositionals: true,
+});
 
 const BASE_PATH = "./data/raw/";
 const BATCH_SIZE = 4000;
@@ -89,7 +99,7 @@ async function parseDatFile(filePath: string){
     const geoID = split[0]!;
     const selectedValues = split.filter((_, idx) => selectedIndices.has(idx)).map(parseNumber);
       
-    // if (!geoID.startsWith("06000")) continue;
+    if(shouldSkip(geoID)) continue;
 
     const queryValues = [`'${geoID}'`, ...selectedValues];
     valuesBatch.push(queryValues);
@@ -133,6 +143,8 @@ async function parseCsvFile(filePath: string){
     const split = separateLineCSV(line);
     const geoID = split[0]!;
     const selectedValues = split.filter((_, idx) => selectedIndices.has(idx)).map(parseNumber);
+    
+    if(shouldSkip(geoID)) continue;
       
     const queryValues = [`'${geoID}'`, ...selectedValues];
     valuesBatch.push(queryValues);
@@ -178,4 +190,8 @@ function getFileType(file: string) {
 function parseNumber(val: string) {
   const asNumber = Number(val);
   return isNaN(asNumber) ? "NULL" : asNumber;
+}
+
+function shouldSkip(geoID: string) {
+  return argValues.geoid && !new RegExp(argValues.geoid).test(geoID);
 }
