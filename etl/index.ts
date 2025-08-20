@@ -2,7 +2,7 @@ import glob from "fast-glob";
 import path from "node:path";
 import { parseArgs } from "util";
 import { separateLine as separateLineCSV } from "../util/csv";
-import { separateLine as separateLineDat } from "../util/dat";
+import { correctDatColumnID, separateLine as separateLineDat } from "../util/dat";
 import { createLineStream } from "../util/stream";
 import { initializeDB } from "./init";
 
@@ -82,10 +82,10 @@ async function parseDatFile(filePath: string){
   if(!firstLine.value) return;
   
   // Select Columns
-  const columnLine = separateLineDat(firstLine.value);
+  const columnLine = separateLineDat(firstLine.value).map(correctDatColumnID);
   const selectedIndices = new Set<number>();
   columnLine.forEach((col, index) => {
-    if (col.includes("_E")) selectedIndices.add(index);
+    if (col.endsWith("E") && col !== "NAME") selectedIndices.add(index);
   });
   
   const selectedColumns = [...selectedIndices].map(i => columnLine[i]);
@@ -177,7 +177,7 @@ function extractEstimateColumns(line: string, fileType: "csv" | "dat") {
     case "csv":
       return separateLineCSV(line).filter((id) => id.endsWith("E") && id !== "NAME");
     case "dat":
-      return separateLineDat(line).filter((id) => id.includes("_E") && id !== "NAME");
+      return separateLineDat(line).filter((id) => id.includes("_E")).map(correctDatColumnID);
   }
 }
 
