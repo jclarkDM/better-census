@@ -2,8 +2,9 @@ import path from "node:path";
 import glob from "fast-glob";
 import { createLineStream } from "../util/stream";
 import { separateLine } from "../util/csv";
-import { connection } from "./init";
+import { initializeDB } from "./init";
 
+const connection = await initializeDB();
 const basePath = "./data/raw/";
 
 export async function getAllIds() {
@@ -31,7 +32,7 @@ export async function getAllIds() {
 }
 
 
-export async function setupTable(ids: Set<string>) {
+export async function setupTable(ids: Set<string>) {  
   const q = `
 create or replace table data (
   id text primary key,

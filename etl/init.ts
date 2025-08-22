@@ -1,6 +1,9 @@
 import { DuckDBInstance } from "@duckdb/node-api";
 import path from "path";
 
-export const db = await DuckDBInstance.create(path.join(__dirname, "..", "data", "census.db"));
+export async function initializeDB() {
+  const db = await DuckDBInstance.create(path.join(__dirname, "..", "data", "census.db"));
+  const connection = await db.connect();
 
-export const connection = await db.connect();
+  return connection;
+}
