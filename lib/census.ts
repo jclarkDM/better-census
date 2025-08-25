@@ -46,7 +46,7 @@ export class Census<Enc extends Encoder.RootRecord> {
   get encoder() {
     return Encoder.proxy(this.internalEncoder ?? {});
   }
-  
+
   get queryService() {
     return this.internalQueryService;
   }
@@ -79,7 +79,7 @@ export class Census<Enc extends Encoder.RootRecord> {
         return new Response("OK!", { status: 200 });
       },
     });
-    
+
     console.log(`Server started at http://${server.hostname}:${server.port}`);
 
     return server;
@@ -134,5 +134,19 @@ export class Census<Enc extends Encoder.RootRecord> {
     }
 
     return output;
+  }
+
+  async geocode({ lng, lat }: { lng: number; lat: number }) {
+    const q = `
+      WITH pt AS ( SELECT st_point(${lng}, ${lat}) AS geom )
+  
+      SELECT STATEFP, COUNTYFP, COUSUBFP, COUSUBNS, GEOIDFQ, GEOID, NAME, NAMELSAD, STUSPS, NAMELSADCO, STATE_NAME, LSAD
+      FROM pt, cousubs c
+      WHERE ST_Contains(c.geom, pt.geom);
+    `;
+
+    const rows = await this.internalQueryService.query(q);
+
+    return rows;
   }
 }
