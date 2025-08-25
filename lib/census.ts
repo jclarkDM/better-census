@@ -137,16 +137,40 @@ export class Census<Enc extends Encoder.RootRecord> {
   }
 
   async geocode({ lng, lat }: { lng: number; lat: number }) {
+    const [cousubs, places] = await Promise.all([
+      this.geocodeCousub({ lng, lat }),
+      this.geocodePlace({ lng, lat })
+    ]);
+
+    return {
+      COUNTY_SUBDIVISIONS: cousubs,
+      INCORPORATED_PLACES: places
+    };
+  }
+  
+  private async geocodePlace({ lng, lat }: { lng: number; lat: number }) {
+    const q = `
+      WITH pt AS ( SELECT st_point(${lng}, ${lat}) AS geom )
+  
+      SELECT PLACEFP, GEOIDFQ, GEOID, NAME, NAMELSAD, STUSPS, STATE_NAME, LSAD
+      FROM pt, places p
+      WHERE ST_Contains(p.geom, pt.geom);
+    `;
+
+    const rows = await this.internalQueryService.query(q);
+    return rows;
+  }
+  
+  private async geocodeCousub({ lng, lat }: { lng: number; lat: number }) {
     const q = `
       WITH pt AS ( SELECT st_point(${lng}, ${lat}) AS geom )
   
       SELECT STATEFP, COUNTYFP, COUSUBFP, COUSUBNS, GEOIDFQ, GEOID, NAME, NAMELSAD, STUSPS, NAMELSADCO, STATE_NAME, LSAD
       FROM pt, cousubs c
-      WHERE ST_Contains(c.geom, pt.geom);
+      WHERE ST_Contains(c.geom, pt.geom)   
     `;
 
     const rows = await this.internalQueryService.query(q);
-
     return rows;
   }
 }
