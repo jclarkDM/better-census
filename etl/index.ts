@@ -16,11 +16,12 @@ const { values: argValues } = parseArgs({
 });
 
 const BASE_PATH = "./data/raw/";
-const GEOIDS_PATH = "./data/boundaries/";
+const BOUNDARIES_PATH = "./data/boundaries/";
 const BATCH_SIZE = 4000;
 
 const connection = await initializeDB();
-await setupGeoIDs();
+await setupCousubBoundaries();
+await setupPlaceBoundaries();
 
 // const ids = await getAllIds();
 // await setupTable(ids);
@@ -28,18 +29,25 @@ await setupGeoIDs();
 
 //
 
-async function setupGeoIDs() {
-  const files = await glob(`${GEOIDS_PATH}/**/*.shp`);
-  for (const file of files) {
-    const fileName = path.basename(file, ".shp");
-    const tableName = isCousubFile(fileName) ? "cousubs" : fileName;
-    await connection.run(`CREATE OR REPLACE TABLE ${tableName} AS SELECT * FROM st_read('${file}');`);
-    console.log(`Created table ${tableName}`);
-  }
+async function setupCousubBoundaries(){
+  const cousubRegex = /cb_\d\d\d\d_us_cousub_500k/;
+  await setupBoundaryShapefile(cousubRegex, "cousubs");
 }
 
-function isCousubFile(fileName: string) {
-  return new RegExp(/cb_\d\d\d\d_us_cousub_500k/).test(fileName);
+async function setupPlaceBoundaries(){
+  const placeRegex = /cb_\d\d\d\d_us_place_500k/;
+  await setupBoundaryShapefile(placeRegex, "places");
+}
+
+async function setupBoundaryShapefile(pattern: RegExp, tableName: string) {
+  const files = await glob(`${BOUNDARIES_PATH}/**/*.shp`);
+  const file = files.find((file) => pattern.test(path.basename(file, ".shp")));
+  
+  if (!file) return;
+
+  console.log(`Inserting into ${tableName} from ${file}`);
+  await connection.run(`CREATE OR REPLACE TABLE ${tableName} AS SELECT * FROM st_read('${file}');`);
+  console.log(`Successfully inserted ${tableName}`);
 }
 
 async function getAllIds() {
