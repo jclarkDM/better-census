@@ -18,11 +18,9 @@ const { values: argValues } = parseArgs({
 const BASE_PATH = "./data/raw/";
 const GEOIDS_PATH = "./data/boundaries/";
 const BATCH_SIZE = 4000;
-const connection = await initializeDB();
 
+const connection = await initializeDB();
 await setupGeoIDs();
-const pt = await pointLookup({ lng: -72.682, lat: 41.763 });
-console.log(pt.getRows());
 
 // const ids = await getAllIds();
 // await setupTable(ids);
@@ -31,8 +29,6 @@ console.log(pt.getRows());
 //
 
 async function setupGeoIDs() {
-  await connection.run("INSTALL spatial; LOAD spatial;");
-
   const files = await glob(`${GEOIDS_PATH}/**/*.shp`);
   for (const file of files) {
     const fileName = path.basename(file, ".shp");
@@ -44,23 +40,6 @@ async function setupGeoIDs() {
 
 function isCousubFile(fileName: string) {
   return new RegExp(/cb_\d\d\d\d_us_cousub_500k/).test(fileName);
-}
-
-async function pointLookup({ lng, lat }: { lng: number; lat: number }) {
-  // SELECT '1600000US' || p.GEOID20 AS place_geoid
-  // FROM pt, places p
-  // WHERE ST_Contains(p.geom, pt.geom)
-
-  // UNION ALL
-  const q = `
-    WITH pt AS ( SELECT st_point(${lng}, ${lat}) AS geom )
-
-    SELECT *
-    FROM pt, cousubs c
-    WHERE ST_Contains(c.geom, pt.geom);
-  `
-
-  return await connection.runAndReadAll(q);
 }
 
 async function getAllIds() {

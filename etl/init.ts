@@ -4,6 +4,7 @@ import path from "path";
 export async function initializeDB() {
   const db = await DuckDBInstance.create(path.join(__dirname, "..", "data", "census.db"));
   const connection = await db.connect();
+  await connection.run("INSTALL spatial; LOAD spatial;");
 
   return connection;
 }
