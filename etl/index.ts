@@ -22,16 +22,15 @@ const BATCH_SIZE = 4000;
 const connection = await initializeDB();
 await setupGeocodingTables();
 
-// const ids = await getAllIds();
-// await setupTable(ids);
-// await loadAll();
+const ids = await getAllIds();
+await setupTable(ids);
+await loadAll();
 
 //
 
 async function setupGeocodingTables() {
   await setupGeocodingList();
-  await setupCousubBoundaries();
-  await setupPlaceBoundaries();
+  await setupBoundaries();
 }
 
 async function setupGeocodingList() {
@@ -42,26 +41,24 @@ async function setupGeocodingList() {
   `);
 }
 
-async function setupCousubBoundaries(){
-  const cousubRegex = /cb_\d\d\d\d_us_cousub_500k/;
-  await setupBoundaryShapefile(cousubRegex, "county_subdivisions");
-}
-
-async function setupPlaceBoundaries(){
-  const placeRegex = /cb_\d\d\d\d_us_place_500k/;
-  await setupBoundaryShapefile(placeRegex, "places");
-}
-
-async function setupBoundaryShapefile(pattern: RegExp, tableName: string) {
+async function setupBoundaries() {
   const files = await glob(`${BOUNDARIES_PATH}/**/*.shp`);
-  const file = files.find((file) => pattern.test(path.basename(file, ".shp")));
-  
-  if (!file) return;
 
-  console.log(`Inserting into ${tableName} from ${file}`);
-  await connection.run(`CREATE OR REPLACE TABLE ${tableName} AS SELECT * FROM st_read('${file}');`);
-  await connection.run(`INSERT INTO geocoding_tables (name) VALUES ('${tableName}');`);
-  console.log(`Successfully inserted ${tableName}`);
+  const cousubRegex = /cb_\d\d\d\d_us_cousub_500k/;
+  const placeRegex = /cb_\d\d\d\d_us_place_500k/;
+
+  for (const file of files) {
+    const base = path.basename(file, ".shp");
+
+    let tableName = base; // default: use file name
+    if (cousubRegex.test(base)) tableName = "county_subdivisions";
+    if (placeRegex.test(base)) tableName = "places";
+
+    console.log(`Inserting into ${tableName} from ${file}`);
+    await connection.run(`CREATE OR REPLACE TABLE ${tableName} AS SELECT * FROM st_read('${file}');`);
+    await connection.run(`INSERT INTO geocoding_tables (name) VALUES ('${tableName}') ON CONFLICT(name) DO NOTHING;`);
+    console.log(`Successfully inserted ${tableName}`);
+  }
 }
 
 async function getAllIds() {
