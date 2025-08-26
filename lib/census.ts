@@ -137,40 +137,26 @@ export class Census<Enc extends Encoder.RootRecord> {
   }
 
   async geocode({ lng, lat }: { lng: number; lat: number }) {
-    const [cousubs, places] = await Promise.all([
-      this.geocodeCousub({ lng, lat }),
-      this.geocodePlace({ lng, lat })
-    ]);
+    const tables = await this.internalQueryService.query(`SELECT name FROM geocoding_tables`);
 
-    return {
-      COUNTY_SUBDIVISIONS: cousubs,
-      INCORPORATED_PLACES: places
-    };
-  }
-  
-  private async geocodePlace({ lng, lat }: { lng: number; lat: number }) {
-    const q = `
-      WITH pt AS ( SELECT st_point(${lng}, ${lat}) AS geom )
-  
-      SELECT PLACEFP, GEOIDFQ, GEOID, NAME, NAMELSAD, STUSPS, STATE_NAME, LSAD
-      FROM pt, places p
-      WHERE ST_Contains(p.geom, pt.geom);
-    `;
+    const results: Record<string, any[]> = {};
+    for (const { name } of tables) {
+      const compatibleColumns = await this.internalQueryService.query(`
+        SELECT column_name
+        FROM information_schema.columns
+        WHERE table_name='${name}'
+        AND data_type NOT IN ('BIGINT','HUGEINT','GEOMETRY');
+      `);
 
-    const rows = await this.internalQueryService.query(q);
-    return rows;
-  }
-  
-  private async geocodeCousub({ lng, lat }: { lng: number; lat: number }) {
-    const q = `
-      WITH pt AS ( SELECT st_point(${lng}, ${lat}) AS geom )
-  
-      SELECT STATEFP, COUNTYFP, COUSUBFP, COUSUBNS, GEOIDFQ, GEOID, NAME, NAMELSAD, STUSPS, NAMELSADCO, STATE_NAME, LSAD
-      FROM pt, cousubs c
-      WHERE ST_Contains(c.geom, pt.geom)   
-    `;
+      const q = `
+        WITH pt AS (SELECT st_point(${lng}, ${lat}) AS geom)
+        SELECT ${compatibleColumns.map(c => c.column_name).join(", ")} FROM pt, ${name} t
+        WHERE ST_Contains(t.geom, pt.geom);
+      `;
+      const rows = await this.internalQueryService.query(q);
+      results[name!.toLocaleString().toUpperCase()] = rows;
+    }
 
-    const rows = await this.internalQueryService.query(q);
-    return rows;
+    return results;
   }
 }

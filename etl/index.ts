@@ -20,8 +20,7 @@ const BOUNDARIES_PATH = "./data/boundaries/";
 const BATCH_SIZE = 4000;
 
 const connection = await initializeDB();
-await setupCousubBoundaries();
-await setupPlaceBoundaries();
+await setupGeocodingTables();
 
 // const ids = await getAllIds();
 // await setupTable(ids);
@@ -29,9 +28,23 @@ await setupPlaceBoundaries();
 
 //
 
+async function setupGeocodingTables() {
+  await setupGeocodingList();
+  await setupCousubBoundaries();
+  await setupPlaceBoundaries();
+}
+
+async function setupGeocodingList() {
+  await connection.run(`
+    CREATE TABLE IF NOT EXISTS geocoding_tables (
+      name TEXT PRIMARY KEY
+    );
+  `);
+}
+
 async function setupCousubBoundaries(){
   const cousubRegex = /cb_\d\d\d\d_us_cousub_500k/;
-  await setupBoundaryShapefile(cousubRegex, "cousubs");
+  await setupBoundaryShapefile(cousubRegex, "county_subdivisions");
 }
 
 async function setupPlaceBoundaries(){
@@ -47,6 +60,7 @@ async function setupBoundaryShapefile(pattern: RegExp, tableName: string) {
 
   console.log(`Inserting into ${tableName} from ${file}`);
   await connection.run(`CREATE OR REPLACE TABLE ${tableName} AS SELECT * FROM st_read('${file}');`);
+  await connection.run(`INSERT INTO geocoding_tables (name) VALUES ('${tableName}');`);
   console.log(`Successfully inserted ${tableName}`);
 }
 
