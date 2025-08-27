@@ -46,7 +46,7 @@ export class Census<Enc extends Encoder.RootRecord> {
   get encoder() {
     return Encoder.proxy(this.internalEncoder ?? {});
   }
-  
+
   get queryService() {
     return this.internalQueryService;
   }
@@ -79,7 +79,7 @@ export class Census<Enc extends Encoder.RootRecord> {
         return new Response("OK!", { status: 200 });
       },
     });
-    
+
     console.log(`Server started at http://${server.hostname}:${server.port}`);
 
     return server;
@@ -134,5 +134,29 @@ export class Census<Enc extends Encoder.RootRecord> {
     }
 
     return output;
+  }
+
+  async geocode({ lng, lat }: { lng: number; lat: number }) {
+    const tables = await this.internalQueryService.query(`SELECT name FROM geocoding_tables`);
+
+    const results: Record<string, any[]> = {};
+    for (const { name } of tables) {
+      const compatibleColumns = await this.internalQueryService.query(`
+        SELECT column_name
+        FROM information_schema.columns
+        WHERE table_name='${name}'
+        AND data_type NOT IN ('BIGINT','HUGEINT','GEOMETRY');
+      `);
+
+      const q = `
+        WITH pt AS (SELECT st_point(${lng}, ${lat}) AS geom)
+        SELECT ${compatibleColumns.map(c => c.column_name).join(", ")} FROM pt, ${name} t
+        WHERE ST_Contains(t.geom, pt.geom);
+      `;
+      const rows = await this.internalQueryService.query(q);
+      results[name!.toLocaleString().toUpperCase()] = rows;
+    }
+
+    return results;
   }
 }
