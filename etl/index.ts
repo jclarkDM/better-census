@@ -18,7 +18,6 @@ const { values: argValues } = parseArgs({
 });
 
 const BASE_PATH = "./data/raw/";
-const BOUNDARIES_PATH = "./data/boundaries/";
 const DB_PATH = "./data/census.db";
 const BATCH_SIZE = 4000;
 
@@ -57,7 +56,7 @@ async function setupGeocodingList() {
 }
 
 async function setupBoundaries() {
-  const files = await glob(`${BOUNDARIES_PATH}/**/*.shp`);
+  const files = await glob(`${BASE_PATH}/**/*.shp`);
 
   const cousubRegex = /cb_\d\d\d\d_us_cousub_500k/;
   const placeRegex = /cb_\d\d\d\d_us_place_500k/;
