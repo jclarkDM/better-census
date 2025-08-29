@@ -1,4 +1,3 @@
-import { initializeDB } from "../etl/init";
 import { transpose } from "../util/object";
 import { Encoder } from "./encoder";
 import { LocalDBQueryService, RemoteDBQueryService, type DBQueryService } from "./queries";
@@ -54,6 +53,7 @@ export class Census<Enc extends Encoder.RootRecord> {
   }
 
   static async createLocal<Enc extends Encoder.RootRecord>(opts?: ConstructorProps<Enc>) {
+    const { initializeDB } = await import("../etl/init");
     const connection = await initializeDB({ canWrite: true });
     const queryService = new LocalDBQueryService(connection);
     return new Census(queryService, { ...opts });
