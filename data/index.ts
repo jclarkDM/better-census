@@ -32,6 +32,8 @@ async function collect() {
   if (urls.length < 1) return;
 
   const zips = await downloadAll(urls.slice(0, 2), DATA_DIR);
+  
+  console.log("Extracting files...");
   await extractAll(zips, DATA_DIR, true);
 }
 
@@ -132,7 +134,6 @@ async function extract(path: string, dest = ".", cleanup = false) {
   const zip = await unzipper.Open.file(path);
   const filename = getFileName(path);
 
-  console.log(`Extracting ${filename}...`);
   await zip.extract({ path: dest });
 
   if (cleanup) Bun.file(path).delete();
