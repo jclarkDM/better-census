@@ -20,6 +20,9 @@ switch (command) {
   case "purge":
     purge();
     break;
+  case "urls":
+    await spawnUrlsFile();
+    break;
 
   default:
     printHelp();
@@ -32,7 +35,7 @@ async function collect() {
   if (!urls.length) return;
 
   const zips = await downloadAll(urls, DATA_DIR);
-  
+
   console.log("Extracting files...");
   await extractAll(zips, DATA_DIR, true);
 }
@@ -70,6 +73,7 @@ function printHelp() {
     collect: "Collects data using data/urls.txt",
     purge: "Purges all data",
     help: "Show this screen",
+    urls: "Spawns a urls.txt file in the data directory",
   };
 
   console.log(
@@ -83,13 +87,8 @@ ${Object.entries(commands)
 }
 
 async function listUrls() {
-  const filePath = `${import.meta.dir}/urls.txt`;
-  const fileExists = await Bun.file(filePath).exists();
-  if (!fileExists){
-    await Bun.write(filePath, "");
-    console.log("Created a new urls.txt file in", filePath);
-  }
-  
+  const filePath = await spawnUrlsFile();
+
   const file = await Bun.file(filePath).text();
   const urls = file.split(/\r?\n/).filter(Boolean);
   return urls;
@@ -150,6 +149,17 @@ async function extractAll(paths: string[], dest = ".", cleanup = false) {
   await Promise.all(paths.map((file) => extract(file, dest, cleanup)));
 }
 
-function getFileName(path: string){
+function getFileName(path: string) {
   return path.split("/").pop()!;
+}
+
+export async function spawnUrlsFile() {
+  const filePath = `${import.meta.dir}/urls.txt`;
+  const fileExists = await Bun.file(filePath).exists();
+  if (!fileExists) {
+    await Bun.write(filePath, "");
+    console.log("Created a new urls.txt file in", filePath);
+  }
+  
+  return filePath;
 }
