@@ -3,7 +3,8 @@
 README.md
 node_modules
 
-data/boundaries
 data/raw
+data/census.db
+data/census.db.wal
 
 Dockerfile
