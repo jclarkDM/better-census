@@ -1,5 +1,6 @@
 import { parseArgs } from "util";
 import cliProgress from "cli-progress";
+import unzipper from "unzipper";
 
 const { positionals } = parseArgs({
   args: Bun.argv.slice(2),
@@ -26,7 +27,9 @@ async function collect() {
   if (urls.length < 1) return;
 
   const outputDir = `${import.meta.dir}/raw`;
-  downloadAll(urls.slice(0, 2), outputDir);
+  const zips = await downloadAll(urls.slice(0, 2), outputDir);
+  
+  await extractAll(zips, outputDir, true);
 }
 
 function printHelp() {
@@ -62,8 +65,10 @@ const MultiBar = new cliProgress.MultiBar(
 );
 
 async function downloadAll(urls: string[], dir: string) {
-  await Promise.all(urls.map((url) => download(url, dir)));
+  const files = await Promise.all(urls.map((url) => download(url, dir)));
   MultiBar.stop();
+  
+  return files;
 }
 
 async function download(url: string, dir: string) {
@@ -88,4 +93,20 @@ async function download(url: string, dir: string) {
 
   await writer.end();
   progress.stop();
+  
+  return outputFilename;
+}
+
+async function extract(path: string, dest = ".", cleanup = false) {
+  const zip = await unzipper.Open.file(path);
+  const filename = path.split("/").pop()!;
+  
+  console.log(`Extracting ${filename}...`)
+  await zip.extract({ path: dest });
+  
+  if (cleanup) Bun.file(path).delete();
+}
+
+async function extractAll(paths: string[], dest = ".", cleanup = false) {
+  await Promise.all(paths.map((file) => extract(file, dest, cleanup)));
 }
