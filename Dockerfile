@@ -50,8 +50,5 @@ COPY --from=per-capita-income-data /data ./data/raw/
 COPY --from=earnings-data /data ./data/raw/
 COPY --from=geoid-data /data ./data/boundaries/
 
-# Build DuckDB
-RUN bun run etl --geoid "^(060|160)0000US"
-
 # Start Server
-CMD ["sh", "-c", "bun run server"]
+CMD ["sh", "-c", "bun etl --geoid '^(060|160)0000US' && bun run server"]
