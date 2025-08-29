@@ -1,0 +1,8 @@
+https://github.com/jclarkDM/better-census/releases/download/data/age.zip
+https://github.com/jclarkDM/better-census/releases/download/data/hispanic_origin.zip
+https://github.com/jclarkDM/better-census/releases/download/data/household_income.zip
+https://github.com/jclarkDM/better-census/releases/download/data/per_capita_income.zip
+https://github.com/jclarkDM/better-census/releases/download/data/earnings.zip
+
+https://github.com/jclarkDM/better-census/releases/download/data/cb_2024_us_place_500k.zip
+https://github.com/jclarkDM/better-census/releases/download/data/cb_2024_us_cousub_500k.zip
