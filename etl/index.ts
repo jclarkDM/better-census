@@ -104,7 +104,6 @@ async function setupTable(ids: Set<string>) {
     );
   `;
 
-  console.log(q);
   console.log(ids.size, "columns");
 
   await connection.run(q);
