@@ -31,7 +31,7 @@ async function collect() {
   const urls = await listUrls();
   if (urls.length < 1) return;
 
-  const zips = await downloadAll(urls.slice(0, 2), DATA_DIR);
+  const zips = await downloadAll(urls, DATA_DIR);
   
   console.log("Extracting files...");
   await extractAll(zips, DATA_DIR, true);
