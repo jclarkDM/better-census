@@ -29,7 +29,7 @@ switch (command) {
 
 async function collect() {
   const urls = await listUrls();
-  if (urls.length < 1) return;
+  if (!urls.length) return;
 
   const zips = await downloadAll(urls, DATA_DIR);
   
@@ -83,7 +83,14 @@ ${Object.entries(commands)
 }
 
 async function listUrls() {
-  const file = await Bun.file(`${import.meta.dir}/urls.txt`).text();
+  const filePath = `${import.meta.dir}/urls.txt`;
+  const fileExists = await Bun.file(filePath).exists();
+  if (!fileExists){
+    await Bun.write(filePath, "");
+    console.log("Created a new urls.txt file in", filePath);
+  }
+  
+  const file = await Bun.file(filePath).text();
   const urls = file.split(/\r?\n/).filter(Boolean);
   return urls;
 }
