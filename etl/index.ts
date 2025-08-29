@@ -10,6 +10,7 @@ const { values: argValues } = parseArgs({
   args: Bun.argv,
   options: {
     geoid: { type: "string" },
+    force: { type: "boolean" },
   },
   strict: true,
   allowPositionals: true,
@@ -17,16 +18,24 @@ const { values: argValues } = parseArgs({
 
 const BASE_PATH = "./data/raw/";
 const BOUNDARIES_PATH = "./data/boundaries/";
+const DB_PATH = "./data/census.db";
 const BATCH_SIZE = 4000;
 
 const connection = await initializeDB();
-await setupGeocodingTables();
-
-const ids = await getAllIds();
-await setupTable(ids);
-await loadAll();
+await main();
 
 //
+
+async function main(){
+  const dbExists = await Bun.file(DB_PATH).exists();
+  if (dbExists && !argValues.force) return console.log(`Database census.db already exists at ${DB_PATH}. Skipping ETL. Use --force to overwrite.`);
+  
+  await setupGeocodingTables();
+  
+  const ids = await getAllIds();
+  await setupTable(ids);
+  await loadAll();
+}
 
 async function setupGeocodingTables() {
   await setupGeocodingList();
