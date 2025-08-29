@@ -2,6 +2,8 @@
 .gitignore
 README.md
 node_modules
-data
+
+data/boundaries
+data/raw
 
 Dockerfile

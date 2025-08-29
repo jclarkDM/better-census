@@ -1,3 +1,4 @@
+import type { DuckDBConnection } from "@duckdb/node-api";
 import glob from "fast-glob";
 import path from "node:path";
 import { parseArgs } from "util";
@@ -21,7 +22,7 @@ const BOUNDARIES_PATH = "./data/boundaries/";
 const DB_PATH = "./data/census.db";
 const BATCH_SIZE = 4000;
 
-const connection = await initializeDB();
+let connection : DuckDBConnection;
 await main();
 
 //
@@ -29,7 +30,12 @@ await main();
 async function main(){
   const dbExists = await Bun.file(DB_PATH).exists();
   if (dbExists && !argValues.force) return console.log(`Database census.db already exists at ${DB_PATH}. Skipping ETL. Use --force to overwrite.`);
+  if (dbExists){
+    console.log(`Database census.db already exists at ${DB_PATH}. Overwriting...`);
+    await Bun.file(DB_PATH).delete();
+  }
   
+  connection = await initializeDB();
   await setupGeocodingTables();
   
   const ids = await getAllIds();
