@@ -42,7 +42,7 @@ async function main() {
   if (error) {
     if (!(error instanceof Error && resourceIsLocked(error.message))) throw error;
     console.error(
-      "The process cannot access the database file because it is being used by another process.\nIf it's being hosted on a server, try running bun run etl --live instead."
+      "The process cannot access the database file due to an IO Error.\nIf it's being hosted on a server, try running bun run etl --live instead."
     );
     return;
   }
@@ -310,5 +310,5 @@ function shouldSkip(geoID: string) {
 }
 
 function resourceIsLocked(message: string) {
-  return message.includes("The process cannot access the file because it is being used by another process.");
+  return message.includes("IO Error");
 }
