@@ -54,7 +54,7 @@ export class Census<Enc extends Encoder.RootRecord> {
   }
 
   static async createLocal<Enc extends Encoder.RootRecord>(opts?: ConstructorProps<Enc>) {
-    const connection = await initializeDB();
+    const connection = await initializeDB({ canWrite: true });
     const queryService = new LocalDBQueryService(connection);
     return new Census(queryService, { ...opts });
   }
@@ -77,7 +77,8 @@ export class Census<Enc extends Encoder.RootRecord> {
             if (!body) return new Response("No body provided", { status: 400 });
 
             const response = await census.queryService.query(body);
-            return new Response(JSON.stringify(response), { headers: { "Content-Type": "application/json" } });
+            const safeResponse = JSON.stringify(response, (_, v) => (typeof v === "bigint" ? v.toString() : v));
+            return new Response(safeResponse, { headers: { "Content-Type": "application/json" } });
           },
         },
       },
