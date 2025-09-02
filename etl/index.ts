@@ -12,7 +12,7 @@ const { values: argValues } = parseArgs({
   options: {
     geoid: { type: "string" },
     force: { type: "boolean" },
-    live: { type: "string" },
+    live: { type: "boolean" },
   },
   strict: true,
   allowPositionals: true,
@@ -36,11 +36,13 @@ async function main() {
     await Bun.file(DB_PATH).delete();
   }
 
-  const error = await setupQueryService().then(() => false).catch((e) => e as Error);
+  const error = await setupQueryService()
+    .then(() => false)
+    .catch((e) => e as Error);
   if (error) {
     if (!(error instanceof Error && resourceIsLocked(error.message))) throw error;
     console.error(
-      "The process cannot access the database file because it is being used by another process.\nIf it's being hosted on a server, try running bun run etl --live <server_url> instead."
+      "The process cannot access the database file because it is being used by another process.\nIf it's being hosted on a server, try running bun run etl --live instead."
     );
     return;
   }
@@ -55,11 +57,11 @@ async function main() {
 
 async function setupQueryService() {
   if (argValues.live) {
-    const url = argValues.live;
+    const url = `http://localhost:${process.env.BETTER_CENSUS_PORT ?? 3000}`;
     queryService = new RemoteDBQueryService(url);
     return queryService;
   }
-  
+
   const connection = await initializeDB({ canWrite: true });
   queryService = new LocalDBQueryService(connection);
   return queryService;
