@@ -10,26 +10,28 @@ export namespace Census {
     Transpose extends boolean = false,
     RawIds extends boolean = false
   > {
-    places: GeoIDs,
-    columns: ColumnIDs,
-    transpose?: Transpose,
-    rawIds?: RawIds
+    places: GeoIDs;
+    columns: ColumnIDs;
+    transpose?: Transpose;
+    rawIds?: RawIds;
   }
-  
+
   export type RunResult<
     GeoIDs extends string[] = [],
     ColumnIDs extends (string | Encoder.EncodedItem<string, string>)[] = [],
     Transpose extends boolean = false,
     RawIds extends boolean = false
-  > = Transpose extends true ? {
-    [C in ColumnIDs[number] as C extends { label: infer L, id: infer I } ? RawIds extends true ? I : L : C]: {
-      [G in GeoIDs[number]]: number | null
-    }
-  } : {
-    [G in GeoIDs[number]]: {
-      [C in ColumnIDs[number] as C extends { label: infer L, id: infer I } ? RawIds extends true ? I : L : C]: number | null
-    }
-  }
+  > = Transpose extends true
+    ? {
+        [C in ColumnIDs[number] as C extends { label: infer L; id: infer I } ? (RawIds extends true ? I : L) : C]: {
+          [G in GeoIDs[number]]: number | null;
+        };
+      }
+    : {
+        [G in GeoIDs[number]]: {
+          [C in ColumnIDs[number] as C extends { label: infer L; id: infer I } ? (RawIds extends true ? I : L) : C]: number | null;
+        };
+      };
 }
 
 type ConstructorProps<Enc extends Encoder.RootRecord> = { items?: Enc };
@@ -67,16 +69,17 @@ export class Census<Enc extends Encoder.RootRecord> {
 
     const server = Bun.serve({
       port: opts?.port ?? 3000,
-      async fetch(req) {
-        if (req.method === "POST") {
-          const body = await req.text();
-          if (!body) return new Response("No body provided", { status: 400 });
+      routes: {
+        "/": {
+          GET: async (req) => new Response("OK!", { status: 200 }),
+          POST: async (req) => {
+            const body = await req.text();
+            if (!body) return new Response("No body provided", { status: 400 });
 
-          const response = await census.queryService.query(body);
-          return new Response(JSON.stringify(response), { headers: { "Content-Type": "application/json" } });
-        }
-
-        return new Response("OK!", { status: 200 });
+            const response = await census.queryService.query(body);
+            return new Response(JSON.stringify(response), { headers: { "Content-Type": "application/json" } });
+          },
+        },
       },
     });
 
@@ -150,7 +153,7 @@ export class Census<Enc extends Encoder.RootRecord> {
 
       const q = `
         WITH pt AS (SELECT st_point(${lng}, ${lat}) AS geom)
-        SELECT ${compatibleColumns.map(c => c.column_name).join(", ")} FROM pt, ${name} t
+        SELECT ${compatibleColumns.map((c) => c.column_name).join(", ")} FROM pt, ${name} t
         WHERE ST_Contains(t.geom, pt.geom);
       `;
       const rows = await this.internalQueryService.query(q);
