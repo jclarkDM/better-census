@@ -4,15 +4,15 @@ import path from "node:path";
 import unzipper from "unzipper";
 import { parseArgs } from "util";
 
+const DATA_DIR = path.join(import.meta.dir, "data");
+const RAW_DATA_DIR = path.join(DATA_DIR, "raw");
+
 const { positionals } = parseArgs({
   args: Bun.argv.slice(2),
   allowPositionals: true,
 });
 
-const DATA_DIR = `${import.meta.dir}/raw`;
-
 const command = positionals[0];
-
 switch (command) {
   case "collect":
     collect();
@@ -34,15 +34,15 @@ async function collect() {
   const urls = await listUrls();
   if (!urls.length) return;
 
-  const zips = await downloadAll(urls, DATA_DIR);
+  const zips = await downloadAll(urls, RAW_DATA_DIR);
 
   console.log("Extracting files...");
-  await extractAll(zips, DATA_DIR, true);
+  await extractAll(zips, RAW_DATA_DIR, true);
 }
 
 async function purge() {
-  const files = await readdir(DATA_DIR).then((allFiles) => allFiles.map((file) => path.join(DATA_DIR, file)));
-  const dbFiles = ["census.db", "census.db.wal"].map((file) => path.join(import.meta.dir, file));
+  const files = await readdir(RAW_DATA_DIR).then((allFiles) => allFiles.map((file) => path.join(RAW_DATA_DIR, file)));
+  const dbFiles = ["census.db", "census.db.wal"].map((file) => path.join(DATA_DIR, file));
   const existingDbFiles = (await Promise.all(dbFiles.map(async (f) => ((await fileExists(f)) ? f : null)))).filter(Boolean) as string[];
   files.push(...existingDbFiles);
   if (files.length < 1) return console.log("No data to purge.");
@@ -65,7 +65,7 @@ async function fileExists(path: string) {
 }
 
 function relativeToDataDir(absPath: string) {
-  return path.relative(import.meta.dir, absPath);
+  return path.relative(DATA_DIR, absPath);
 }
 
 function printHelp() {
@@ -154,12 +154,12 @@ function getFileName(path: string) {
 }
 
 export async function spawnUrlsFile() {
-  const filePath = `${import.meta.dir}/urls.txt`;
+  const filePath = `${DATA_DIR}/urls.txt`;
   const fileExists = await Bun.file(filePath).exists();
   if (!fileExists) {
     await Bun.write(filePath, "");
     console.log("Created a new urls.txt file in", filePath);
   }
-  
+
   return filePath;
 }
