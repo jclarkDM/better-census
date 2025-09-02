@@ -36,7 +36,7 @@ async function main() {
     await Bun.file(DB_PATH).delete();
   }
 
-  connection = await initializeDB(true);
+  connection = await initializeDB({ canWrite: true });
   await setupFileTable();
   await setupGeocodingTables();
 
@@ -156,7 +156,7 @@ async function loadAll() {
 
     if (fileType === "dat") await parseDatFile(file);
     if (fileType === "csv") await parseCsvFile(file);
-    
+
     await addToFileTable(fileName);
   }
 }
