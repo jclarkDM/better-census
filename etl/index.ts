@@ -23,22 +23,23 @@ const DB_PATH = path.join(DATA_DIR, "census.db").replace(/\\/g, "/");
 console.log(DATA_DIR, RAW_DATA_DIR, DB_PATH);
 const BATCH_SIZE = 4000;
 
-let connection : DuckDBConnection;
+let connection: DuckDBConnection;
 await main();
 
 //
 
-async function main(){
+async function main() {
   const dbExists = await Bun.file(DB_PATH).exists();
-  if (dbExists && !argValues.force) return console.log(`Database census.db already exists at ${DB_PATH}. Skipping ETL. Use --force to overwrite.`);
-  if (dbExists){
+  // if (dbExists && !argValues.force) return console.log(`Database census.db already exists at ${DB_PATH}. Skipping ETL. Use --force to overwrite.`);
+  if (dbExists && argValues.force) {
     console.log(`Database census.db already exists at ${DB_PATH}. Overwriting...`);
     await Bun.file(DB_PATH).delete();
   }
-  
+
   connection = await initializeDB();
+  await setupFileTable();
   await setupGeocodingTables();
-  
+
   const ids = await getAllIds();
   await setupTable(ids);
   await loadAll();
@@ -79,7 +80,7 @@ async function setupBoundaries() {
 
 async function getAllIds() {
   const files = await glob(`${RAW_DATA_DIR}/**/*.{csv,dat}`).then((f) => f.map((file) => file.replace(RAW_DATA_DIR, "")));
-  console.log(`${RAW_DATA_DIR}/**/*.{csv,dat}`)
+  console.log(`${RAW_DATA_DIR}/**/*.{csv,dat}`);
 
   const ids = new Set<string>();
   for (const fileName of files) {
@@ -112,6 +113,31 @@ async function setupTable(ids: Set<string>) {
   await connection.run(q);
 }
 
+async function setupFileTable() {
+  const q = `
+    CREATE TABLE IF NOT EXISTS files (
+      name TEXT PRIMARY KEY
+    );
+  `;
+  await connection.run(q);
+  console.log("Created files table");
+}
+
+async function addToFileTable(fileName: string) {
+  const q = `
+    INSERT INTO files (name) VALUES ('${fileName}') ON CONFLICT(name) DO NOTHING;
+  `;
+  await connection.run(q);
+}
+
+async function fileExistsInFileTable(fileName: string) {
+  const q = `
+    SELECT name FROM files WHERE name = '${fileName}';
+  `;
+  const result = await connection.run(q);
+  return result.rowCount > 0;
+}
+
 async function loadAll() {
   const files = await glob(`${RAW_DATA_DIR}/**/*.{csv,dat}`);
   for (const file of files) {
@@ -119,11 +145,19 @@ async function loadAll() {
     const fileType = getFileType(file);
     if (fileType === "unknown") continue;
 
+    const inFileTable = await fileExistsInFileTable(fileName);
+    if (inFileTable) {
+      console.log(`Skipping ${fileName} because it's already in the files table`);
+      continue;
+    }
+
     const index = files.indexOf(file);
     console.log(`Loading ${index + 1}/${files.length}: ${fileName}`);
 
     if (fileType === "dat") await parseDatFile(file);
     if (fileType === "csv") await parseCsvFile(file);
+    
+    await addToFileTable(fileName);
   }
 }
 
@@ -218,9 +252,9 @@ async function parseCsvFile(filePath: string) {
 
 async function insertValuesBatch(valueBatch: (string | number)[][], selectedColumns: (string | undefined)[]) {
   const q = `
-    insert into data (id, ${selectedColumns.join(", ")})
-    values ${valueBatch.map((chunk) => `(${chunk.join(", ")})`).join(",\n  ")}
-    on conflict (id) do update set
+    INSERT INTO data (id, ${selectedColumns.join(", ")})
+    VALUES ${valueBatch.map((chunk) => `(${chunk.join(", ")})`).join(",\n  ")}
+    ON CONFLICT (id) DO UPDATE SET
       ${selectedColumns.map((col, i) => `"${col}" = excluded."${col}"`).join(",\n  ")}
   `;
 
