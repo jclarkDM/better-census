@@ -17,8 +17,10 @@ const { values: argValues } = parseArgs({
   allowPositionals: true,
 });
 
-const BASE_PATH = "./data/raw/";
-const DB_PATH = "./data/census.db";
+const DATA_DIR = path.join(import.meta.dir, "../data").replace(/\\/g, "/");
+const RAW_DATA_DIR = path.join(DATA_DIR, "raw").replace(/\\/g, "/");
+const DB_PATH = path.join(DATA_DIR, "census.db").replace(/\\/g, "/");
+console.log(DATA_DIR, RAW_DATA_DIR, DB_PATH);
 const BATCH_SIZE = 4000;
 
 let connection : DuckDBConnection;
@@ -56,7 +58,7 @@ async function setupGeocodingList() {
 }
 
 async function setupBoundaries() {
-  const files = await glob(`${BASE_PATH}/**/*.shp`);
+  const files = await glob(`${RAW_DATA_DIR}/**/*.shp`);
 
   const cousubRegex = /cb_\d\d\d\d_us_cousub_500k/;
   const placeRegex = /cb_\d\d\d\d_us_place_500k/;
@@ -76,14 +78,15 @@ async function setupBoundaries() {
 }
 
 async function getAllIds() {
-  const files = await glob(`${BASE_PATH}/**/*.{csv,dat}`).then((f) => f.map((file) => file.replace(BASE_PATH, "")));
+  const files = await glob(`${RAW_DATA_DIR}/**/*.{csv,dat}`).then((f) => f.map((file) => file.replace(RAW_DATA_DIR, "")));
+  console.log(`${RAW_DATA_DIR}/**/*.{csv,dat}`)
 
   const ids = new Set<string>();
   for (const fileName of files) {
     const fileType = getFileType(fileName);
     if (fileType === "unknown") continue;
 
-    const fileStream = Bun.file(path.join(`${BASE_PATH}/${fileName}`)).stream();
+    const fileStream = Bun.file(path.join(`${RAW_DATA_DIR}/${fileName}`)).stream();
     const lineStream = createLineStream(fileStream);
 
     const firstLine = await lineStream.next();
@@ -110,13 +113,14 @@ async function setupTable(ids: Set<string>) {
 }
 
 async function loadAll() {
-  const files = await glob(`${BASE_PATH}/**/*.{csv,dat}`);
+  const files = await glob(`${RAW_DATA_DIR}/**/*.{csv,dat}`);
   for (const file of files) {
+    const fileName = path.basename(file);
     const fileType = getFileType(file);
     if (fileType === "unknown") continue;
 
     const index = files.indexOf(file);
-    console.log(`Loading ${index + 1}/${files.length}: ${file}`);
+    console.log(`Loading ${index + 1}/${files.length}: ${fileName}`);
 
     if (fileType === "dat") await parseDatFile(file);
     if (fileType === "csv") await parseCsvFile(file);
@@ -124,6 +128,7 @@ async function loadAll() {
 }
 
 async function parseDatFile(filePath: string) {
+  const fileName = path.basename(filePath);
   const fileStream = Bun.file(filePath).stream();
   const lineStream = createLineStream(fileStream);
 
@@ -138,7 +143,7 @@ async function parseDatFile(filePath: string) {
   });
 
   const selectedColumns = [...selectedIndices].map((i) => columnLine[i]);
-  console.log("--", selectedColumns.length, "columns in", filePath);
+  console.log("--", selectedColumns.length, "columns in", fileName);
 
   // Insert Rows
   let rows = 0;
@@ -156,7 +161,7 @@ async function parseDatFile(filePath: string) {
     if (valuesBatch.length >= BATCH_SIZE) {
       await insertValuesBatch(valuesBatch, selectedColumns);
       rows += valuesBatch.length;
-      console.log("  --", `Inserted ${valuesBatch.length} rows for ${filePath}`);
+      console.log("  --", `Inserted ${valuesBatch.length} rows for ${fileName}`);
 
       valuesBatch.length = 0;
     }
@@ -166,6 +171,7 @@ async function parseDatFile(filePath: string) {
 }
 
 async function parseCsvFile(filePath: string) {
+  const fileName = path.basename(filePath);
   const fileStream = Bun.file(filePath).stream();
   const lineStream = createLineStream(fileStream);
 
@@ -201,7 +207,7 @@ async function parseCsvFile(filePath: string) {
     if (valuesBatch.length >= BATCH_SIZE) {
       await insertValuesBatch(valuesBatch, selectedColumns);
       rows += valuesBatch.length;
-      console.log("  --", `Inserted ${valuesBatch.length} rows for ${filePath}`);
+      console.log("  --", `Inserted ${valuesBatch.length} rows for ${fileName}`);
 
       valuesBatch.length = 0;
     }
