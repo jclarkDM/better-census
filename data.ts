@@ -3,6 +3,7 @@ import { readdir, rm } from "node:fs/promises";
 import path from "node:path";
 import unzipper from "unzipper";
 import { parseArgs } from "util";
+import { mkdir } from "node:fs/promises";
 
 const DATA_DIR = path.join(import.meta.dir, "data");
 const RAW_DATA_DIR = path.join(DATA_DIR, "raw");
@@ -120,6 +121,7 @@ async function download(url: string, dir: string) {
   const total = Number(res.headers.get("content-length") || 0);
   const progress = MultiBar.create(total, 0, { filename });
 
+  await mkdir(dir, { recursive: true });
   const outputFile = Bun.file(outputFilename);
   const writer = outputFile.writer();
   let loaded = 0;
