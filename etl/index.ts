@@ -1,7 +1,7 @@
-import type { DuckDBConnection } from "@duckdb/node-api";
 import glob from "fast-glob";
 import path from "node:path";
 import { parseArgs } from "util";
+import { LocalDBQueryService, RemoteDBQueryService, type DBQueryService } from "../lib/queries";
 import { separateLine as separateLineCSV } from "../util/csv";
 import { correctDatColumnID, separateLine as separateLineDat } from "../util/dat";
 import { createLineStream } from "../util/stream";
@@ -12,6 +12,7 @@ const { values: argValues } = parseArgs({
   options: {
     geoid: { type: "string" },
     force: { type: "boolean" },
+    live: { type: "string" },
   },
   strict: true,
   allowPositionals: true,
@@ -20,10 +21,9 @@ const { values: argValues } = parseArgs({
 const DATA_DIR = path.join(import.meta.dir, "../data").replace(/\\/g, "/");
 const RAW_DATA_DIR = path.join(DATA_DIR, "raw").replace(/\\/g, "/");
 const DB_PATH = path.join(DATA_DIR, "census.db").replace(/\\/g, "/");
-console.log(DATA_DIR, RAW_DATA_DIR, DB_PATH);
 const BATCH_SIZE = 4000;
 
-let connection: DuckDBConnection;
+let queryService: DBQueryService;
 await main();
 
 //
@@ -36,7 +36,15 @@ async function main() {
     await Bun.file(DB_PATH).delete();
   }
 
-  connection = await initializeDB({ canWrite: true });
+  const error = await setupQueryService().then(() => false).catch((e) => e as Error);
+  if (error) {
+    if (!(error instanceof Error && resourceIsLocked(error.message))) throw error;
+    console.error(
+      "The process cannot access the database file because it is being used by another process.\nIf it's being hosted on a server, try running bun run etl --live <server_url> instead."
+    );
+    return;
+  }
+
   await setupFileTable();
   await setupGeocodingTables();
 
@@ -45,13 +53,25 @@ async function main() {
   await loadAll();
 }
 
+async function setupQueryService() {
+  if (argValues.live) {
+    const url = argValues.live;
+    queryService = new RemoteDBQueryService(url);
+    return queryService;
+  }
+  
+  const connection = await initializeDB({ canWrite: true });
+  queryService = new LocalDBQueryService(connection);
+  return queryService;
+}
+
 async function setupGeocodingTables() {
   await setupGeocodingList();
   await setupBoundaries();
 }
 
 async function setupGeocodingList() {
-  await connection.run(`
+  await queryService.query(`
     CREATE TABLE IF NOT EXISTS geocoding_tables (
       name TEXT PRIMARY KEY
     );
@@ -72,8 +92,8 @@ async function setupBoundaries() {
     if (placeRegex.test(base)) tableName = "places";
 
     console.log(`Inserting into ${tableName} from ${file}`);
-    await connection.run(`CREATE OR REPLACE TABLE ${tableName} AS SELECT * FROM st_read('${file}');`);
-    await connection.run(`INSERT INTO geocoding_tables (name) VALUES ('${tableName}') ON CONFLICT(name) DO NOTHING;`);
+    await queryService.query(`CREATE OR REPLACE TABLE ${tableName} AS SELECT * FROM st_read('${file}');`);
+    await queryService.query(`INSERT INTO geocoding_tables (name) VALUES ('${tableName}') ON CONFLICT(name) DO NOTHING;`);
     console.log(`Successfully inserted ${tableName}`);
   }
 }
@@ -110,7 +130,7 @@ async function setupTable(ids: Set<string>) {
 
   console.log(ids.size, "columns");
 
-  await connection.run(q);
+  await queryService.query(q);
 }
 
 async function setupFileTable() {
@@ -119,7 +139,7 @@ async function setupFileTable() {
       name TEXT PRIMARY KEY
     );
   `;
-  await connection.run(q);
+  await queryService.query(q);
   console.log("Created files table");
 }
 
@@ -127,15 +147,15 @@ async function addToFileTable(fileName: string) {
   const q = `
     INSERT INTO files (name) VALUES ('${fileName}') ON CONFLICT(name) DO NOTHING;
   `;
-  await connection.run(q);
+  await queryService.query(q);
 }
 
 async function fileExistsInFileTable(fileName: string) {
   const q = `
     SELECT name FROM files WHERE name = '${fileName}';
   `;
-  const result = await connection.run(q);
-  return result.rowCount > 0;
+  const result = await queryService.query(q);
+  return result.length > 0;
 }
 
 async function loadAll() {
@@ -258,7 +278,7 @@ async function insertValuesBatch(valueBatch: (string | number)[][], selectedColu
       ${selectedColumns.map((col, i) => `"${col}" = excluded."${col}"`).join(",\n  ")}
   `;
 
-  await connection.run(q);
+  await queryService.query(q);
 }
 
 function extractEstimateColumns(line: string, fileType: "csv" | "dat") {
@@ -285,4 +305,8 @@ function parseNumber(val: string) {
 
 function shouldSkip(geoID: string) {
   return argValues.geoid && !new RegExp(argValues.geoid).test(geoID);
+}
+
+function resourceIsLocked(message: string) {
+  return message.includes("The process cannot access the file because it is being used by another process.");
 }
