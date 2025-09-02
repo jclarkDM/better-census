@@ -36,7 +36,7 @@ async function main() {
     await Bun.file(DB_PATH).delete();
   }
 
-  connection = await initializeDB();
+  connection = await initializeDB(true);
   await setupFileTable();
   await setupGeocodingTables();
 
