@@ -1,0 +1,9 @@
+.github
+.gitignore
+README.md
+node_modules
+
+data/boundaries
+data/raw
+
+Dockerfile
