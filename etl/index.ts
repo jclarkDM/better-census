@@ -124,9 +124,9 @@ async function getAllIds() {
 
 async function setupTable(ids: Set<string>) {
   const q = `
-    create or replace table data (
-    id text primary key,
-    ${[...ids].map((id) => `"${id}" real`).join(",\n  ")}
+    CREATE TABLE IF NOT EXISTS data (
+      id text primary key,
+      ${[...ids].map((id) => `"${id}" real`).join(",\n  ")}
     );
   `;
 
