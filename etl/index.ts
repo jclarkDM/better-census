@@ -226,12 +226,12 @@ async function parseDatFile(filePath: string) {
     const split = separateLineDat(line);
     const geoID = split[0]!;
     const selectedValues = split.filter((_, idx) => selectedIndices.has(idx)).map(parseNumber);
-
+    
     if (shouldSkip(geoID)) continue;
-
+    
     const queryValues = [`'${geoID}'`, ...selectedValues];
     valuesBatch.push(queryValues);
-
+        
     if (valuesBatch.length >= BATCH_SIZE) {
       await insertValuesBatch(valuesBatch, selectedColumns);
       rows += valuesBatch.length;
@@ -239,6 +239,12 @@ async function parseDatFile(filePath: string) {
 
       valuesBatch.length = 0;
     }
+  }
+  
+  if (valuesBatch.length) {
+    await insertValuesBatch(valuesBatch, selectedColumns);
+    rows += valuesBatch.length;
+    console.log("  --", `Inserted ${valuesBatch.length} rows for ${fileName}`);
   }
 
   console.log("--", `Loaded ${filePath} with ${rows} rows`);
@@ -284,7 +290,13 @@ async function parseCsvFile(filePath: string) {
       console.log("  --", `Inserted ${valuesBatch.length} rows for ${fileName}`);
 
       valuesBatch.length = 0;
-    }
+    }  
+  }
+  
+  if (valuesBatch.length) {
+    await insertValuesBatch(valuesBatch, selectedColumns);
+    rows += valuesBatch.length;
+    console.log("  --", `Inserted ${valuesBatch.length} rows for ${fileName}`);
   }
 
   console.log("--", `Loaded ${filePath} with ${rows} rows`);
