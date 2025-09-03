@@ -70,7 +70,7 @@ async function getAllTables() {
 }
 
 async function getTableInfo(tableName: string) {
-  const q = `PRAGMA table_info(data);`;
+  const q = `PRAGMA table_info(${tableName});`;
   const tableInfo = await queryService.query(q);
   return tableInfo;
 }
