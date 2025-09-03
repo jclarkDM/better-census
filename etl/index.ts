@@ -31,23 +31,21 @@ await main();
 async function main() {
   const dbExists = await Bun.file(DB_PATH).exists();
   // if (dbExists && !argValues.force) return console.log(`Database census.db already exists at ${DB_PATH}. Skipping ETL. Use --force to overwrite.`);
-  
+
   const error = await setupQueryService()
-  .then(() => false)
-  .catch((e) => e as Error);
+    .then(() => false)
+    .catch((e) => e as Error);
   if (error) {
     if (!(error instanceof Error && resourceIsLocked(error.message))) throw error;
-    console.error(
-      "The process cannot access the database file due to an IO Error.\nIf it's being hosted on a server, try running bun run etl --live instead."
-    );
+    console.error("The process cannot access the database file due to an IO Error.\nIf it's being hosted on a server, try running bun run etl --live instead.");
     return;
   }
-  
+
   if (dbExists && argValues.force) {
     console.log(`Database census.db already exists at ${DB_PATH}. Truncating all tables...`);
     await truncateDB();
   }
-  
+
   await setupFileTable();
   await setupGeocodingTables();
 
@@ -56,7 +54,7 @@ async function main() {
   await loadAll();
 }
 
-// 
+//
 
 async function truncateDB() {
   const allTables = await getAllTables();
@@ -65,11 +63,11 @@ async function truncateDB() {
   }
 }
 
-async function getAllTables(){
+async function getAllTables() {
   const q = `
     SELECT table_name FROM information_schema.tables;
   `;
-  const allTables = await queryService.query(q).then(records => records.map(record => record["table_name"]));
+  const allTables = await queryService.query(q).then((records) => records.map((record) => record["table_name"]));
   return allTables;
 }
 
@@ -241,6 +239,12 @@ async function parseDatFile(filePath: string) {
     }
   }
 
+  if (valuesBatch.length) {
+    await insertValuesBatch(valuesBatch, selectedColumns);
+    rows += valuesBatch.length;
+    console.log("  --", `Inserted ${valuesBatch.length} rows for ${fileName}`);
+  }
+
   console.log("--", `Loaded ${filePath} with ${rows} rows`);
 }
 
@@ -285,6 +289,12 @@ async function parseCsvFile(filePath: string) {
 
       valuesBatch.length = 0;
     }
+  }
+
+  if (valuesBatch.length) {
+    await insertValuesBatch(valuesBatch, selectedColumns);
+    rows += valuesBatch.length;
+    console.log("  --", `Inserted ${valuesBatch.length} rows for ${fileName}`);
   }
 
   console.log("--", `Loaded ${filePath} with ${rows} rows`);
