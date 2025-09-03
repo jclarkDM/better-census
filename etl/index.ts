@@ -31,14 +31,10 @@ await main();
 async function main() {
   const dbExists = await Bun.file(DB_PATH).exists();
   // if (dbExists && !argValues.force) return console.log(`Database census.db already exists at ${DB_PATH}. Skipping ETL. Use --force to overwrite.`);
-  if (dbExists && argValues.force) {
-    console.log(`Database census.db already exists at ${DB_PATH}. Overwriting...`);
-    await Bun.file(DB_PATH).delete();
-  }
-
+  
   const error = await setupQueryService()
-    .then(() => false)
-    .catch((e) => e as Error);
+  .then(() => false)
+  .catch((e) => e as Error);
   if (error) {
     if (!(error instanceof Error && resourceIsLocked(error.message))) throw error;
     console.error(
@@ -46,13 +42,35 @@ async function main() {
     );
     return;
   }
-
+  
+  if (dbExists && argValues.force) {
+    console.log(`Database census.db already exists at ${DB_PATH}. Truncating all tables...`);
+    await truncateDB();
+  }
+  
   await setupFileTable();
   await setupGeocodingTables();
 
   const ids = await getAllIds();
   await setupTable(ids);
   await loadAll();
+}
+
+// 
+
+async function truncateDB() {
+  const allTables = await getAllTables();
+  for (const table of allTables) {
+    await queryService.query(`TRUNCATE TABLE ${table} CASCADE;`);
+  }
+}
+
+async function getAllTables(){
+  const q = `
+    SELECT table_name FROM information_schema.tables;
+  `;
+  const allTables = await queryService.query(q).then(records => records.map(record => record["table_name"]));
+  return allTables;
 }
 
 async function setupQueryService() {
