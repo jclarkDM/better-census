@@ -64,11 +64,15 @@ async function truncateDB() {
 }
 
 async function getAllTables() {
-  const q = `
-    SELECT table_name FROM information_schema.tables;
-  `;
+  const q = `SELECT table_name FROM information_schema.tables;`;
   const allTables = await queryService.query(q).then((records) => records.map((record) => record["table_name"]));
   return allTables;
+}
+
+async function getTableInfo(tableName: string) {
+  const q = `PRAGMA table_info(data);`;
+  const tableInfo = await queryService.query(q);
+  return tableInfo;
 }
 
 async function setupQueryService() {
@@ -141,14 +145,19 @@ async function getAllIds() {
 async function setupTable(ids: Set<string>) {
   const q = `
     CREATE TABLE IF NOT EXISTS data (
-      id text primary key,
-      ${[...ids].map((id) => `"${id}" real`).join(",\n  ")}
+      id text primary key
     );
   `;
-
-  console.log(ids.size, "columns");
-
   await queryService.query(q);
+
+  const tableInfo = await getTableInfo("data");
+  const existingColumns = new Set<string>(tableInfo.map((column) => column.name as string));
+  const columnsToAdd = [...ids].filter((id) => !existingColumns.has(id));
+
+  for (const column of columnsToAdd) {
+    await queryService.query(`ALTER TABLE data ADD COLUMN "${column}" real`);
+  }
+  console.log(ids.size, "columns");
 }
 
 async function setupFileTable() {
