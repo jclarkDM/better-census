@@ -270,5 +270,26 @@
     "columns": {
       "B01001_001E": 22171
     }
+  },
+  "1600000US2148006": {
+    "name": "Louisville",
+    "state": "Kentucky",
+    "totalPopulation": 640796,
+    "coordinates": {
+      "lat": 38.2234412,
+      "lng": -85.7056139
+    },
+    "geography": {
+      "STATEFP": "21",
+      "PLACEFP": "48000",
+      "PLACENS": "02404963",
+      "GEOIDFQ": "1600000US2148006",
+      "GEOID": "2148000",
+      "NAME": "Louisville",
+      "NAMELSAD": "Louisville city",
+      "STUSPS": "KY",
+      "STATE_NAME": "Kentucky",
+      "LSAD": "25"
+    }
   }
 }
