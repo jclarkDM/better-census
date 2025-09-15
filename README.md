@@ -44,7 +44,7 @@ bun run etl --geoid "^(060|160)0000US" --live
 ```
 
 > [!TIP]
-> It's recommended to only include the data you want to use. If we want to include everything, we can just run the command without the `--geoid` flag.
+> It's recommended to only include the data you want to use. If you want to include everything, you can run the command without the `--geoid` flag.
 > ```bash
 > bun run etl
 > ```
