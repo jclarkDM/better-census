@@ -1,6 +1,7 @@
 import { stateFipsMap } from "./fipsMap";
 
 export type Location = {
+  GEOIDFQ: string;
   name: string;
   state: string;
   totalPopulation: number;

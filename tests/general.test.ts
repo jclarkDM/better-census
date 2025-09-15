@@ -1,11 +1,9 @@
 import { expect, test } from "bun:test";
 import { Census } from "../lib/census";
 import locationsJSON from "./locations.json";
-import testValidationJSON from "./test-validation.json";
 import { getPlaceGeography, isCitySimilar, percentDiff, type GeocodedLocation, type Location } from "./util";
 
 const locations: Location[] = locationsJSON;
-const testValidation: Record<string, any> = testValidationJSON;
 
 //
 
@@ -19,7 +17,7 @@ locations.map((location, idx) => {
     const geocoded = (await cen.geocode({ ...location.coordinates })) as GeocodedLocation;
     const geography = getPlaceGeography(geocoded);
     expect(geography).toBeTruthy();
-    expect(testValidation[geography!.GEOIDFQ].name).toEqual(location.name);
+    expect(geography!.GEOIDFQ).toEqual(location.GEOIDFQ);
   });
 });
 

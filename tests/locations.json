@@ -1,68 +1,122 @@
 [
   {
-    "name": "Summersville",
-    "state": "West Virginia",
-    "totalPopulation": 3326,
-    "coordinates": { "lat": 38.2812, "lng": -80.8526 }
-  },
-  {
-    "name": "Arlington",
-    "state": "Virginia",
-    "totalPopulation": 239807,
-    "coordinates": { "lat": 38.890759, "lng": -77.084747 }
-  },
-  {
-    "name": "Dewitt Township",
-    "state": "Michigan",
-    "totalPopulation": 15073,
-    "coordinates": { "lat": 42.816723, "lng": -84.538956 }
-  },
-  {
-    "name": "Honolulu",
-    "state": "Hawaii",
-    "totalPopulation": 337338,
-    "coordinates": { "lat": 21.309919, "lng": -157.858154 }
-  },
-  {
-    "name": "Hamden",
-    "state": "Connecticut",
-    "totalPopulation": 61169,
-    "coordinates": { "lat": 41.382919, "lng": -72.907738 }
-  },
-  {
-    "name": "Watertown",
-    "state": "Connecticut",
-    "totalPopulation": 22514,
-    "coordinates": { "lat": 41.614815, "lng": -73.133209 }
-  },
-  {
-    "name": "Augusta County",
-    "state": "Georgia",
-    "totalPopulation": 201737,
-    "coordinates": { "lat": 33.473498, "lng": -82.010515 }
-  },
-  {
+    "GEOIDFQ": "1600000US1931710",
     "name": "Gowrie",
     "state": "Iowa",
     "totalPopulation": 943,
-    "coordinates": { "lat": 42.2806, "lng": -94.2908 }
+    "coordinates": {
+      "lat": 42.2806,
+      "lng": -94.2908
+    }
   },
   {
-    "name": "New York",
-    "state": "New York",
-    "totalPopulation": 8478072,
-    "coordinates": { "lat": 40.7128, "lng": -74.006 }
+    "GEOIDFQ": "1600000US5103000",
+    "name": "Arlington",
+    "state": "Virginia",
+    "totalPopulation": 239807,
+    "coordinates": {
+      "lat": 38.890759,
+      "lng": -77.084747
+    }
   },
   {
-    "name": "San Diego",
-    "state": "California",
-    "totalPopulation": 1419516,
-    "coordinates": { "lat": 32.7157, "lng": -117.1611 }
-  },
-  {
+    "GEOIDFQ": "0600000US3610310000",
     "name": "Brookhaven (Terryville)",
     "state": "New York",
     "totalPopulation": 488497,
-    "coordinates": { "lat": 40.9090, "lng": -73.0651 }
+    "coordinates": {
+      "lat": 40.909,
+      "lng": -73.0651
+    }
+  },
+  {
+    "GEOIDFQ": "1600000US1571550",
+    "name": "Honolulu",
+    "state": "Hawaii",
+    "totalPopulation": 337338,
+    "coordinates": {
+      "lat": 21.309919,
+      "lng": -157.858154
+    }
+  },
+  {
+    "GEOIDFQ": "1600000US0666000",
+    "name": "San Diego",
+    "state": "California",
+    "totalPopulation": 1419516,
+    "coordinates": {
+      "lat": 32.7157,
+      "lng": -117.1611
+    }
+  },
+  {
+    "GEOIDFQ": "1600000US3651000",
+    "name": "New York",
+    "state": "New York",
+    "totalPopulation": 8478072,
+    "coordinates": {
+      "lat": 40.7128,
+      "lng": -74.006
+    }
+  },
+  {
+    "GEOIDFQ": "0600000US0917035650",
+    "name": "Hamden",
+    "state": "Connecticut",
+    "totalPopulation": 61169,
+    "coordinates": {
+      "lat": 41.382919,
+      "lng": -72.907738
+    }
+  },
+  {
+    "GEOIDFQ": "0600000US2603722140",
+    "name": "Dewitt Township",
+    "state": "Michigan",
+    "totalPopulation": 15073,
+    "coordinates": {
+      "lat": 42.816723,
+      "lng": -84.538956
+    }
+  },
+  {
+    "GEOIDFQ": "1600000US5477980",
+    "name": "Summersville",
+    "state": "West Virginia",
+    "totalPopulation": 3326,
+    "coordinates": {
+      "lat": 38.2812,
+      "lng": -80.8526
+    }
+  },
+  {
+    "GEOIDFQ": "1600000US1304204",
+    "name": "Augusta County",
+    "state": "Georgia",
+    "totalPopulation": 201737,
+    "coordinates": {
+      "lat": 33.473498,
+      "lng": -82.010515
+    }
+  },
+  {
+    "GEOIDFQ": "0600000US0914080490",
+    "name": "Watertown",
+    "state": "Connecticut",
+    "totalPopulation": 22514,
+    "coordinates": {
+      "lat": 41.614815,
+      "lng": -73.133209
+    }
+  },
+  {
+    "GEOIDFQ": "1600000US2148006",
+    "name": "Louisville",
+    "state": "Kentucky",
+    "totalPopulation": 640796,
+    "coordinates": {
+      "lat": 38.2234412,
+      "lng": -85.7056139
+    }
   }
 ]
