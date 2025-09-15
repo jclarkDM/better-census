@@ -61,7 +61,7 @@ bun run server
 
 ---
 
-## :package: Docker
+## :whale: Docker
 
 > [!TIP]
 > The port defaults to `3000` if there is no `BETTER_CENSUS_PORT` environment variable set. It's also recommended to mount the `data` directory to persist the data.
