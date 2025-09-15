@@ -11,38 +11,74 @@
   </p>
 </div>
 
-## Features
-
-- ETL utilities for importing data directly from `.csv` and `.shp` input files
+## :sparkles: Features
+- ETL utilities for importing data directly from `.csv` `.dat` and `.shp` files
 - DuckDB for efficient data querying
 - Encoders for converting human-readable keys into Census IDs, e.g. `Census.encoder.housing.median.rent()` -> `"B25064_001E"`
 
-## Setup
-
-This repository includes [files in the releases section](https://github.com/jclarkDM/better-census/releases/tag/data) with common Census demographic data, including
-
-- Age by race
-- Housing data:
-  - Average rent
-  - Median home value
-  - Occupied and vacant housing units
-- Income buckets by race
-- Per-capita income by race
-- Geocoding data for County Subdivisions and Incorporated Places
+## :wrench: Setup
+This repository includes [files in the releases section](https://github.com/jclarkDM/better-census/releases/tag/data) with common Census demographic data.
 
 To use this data, unzip it into the `data/raw` directory. Then, run the ETL script with `bun etl`. This will take a while, but you should get a DuckDB database file in `data/census.db`.
 
-## Docker
+### 1. Add data Sources
+Add the URLs of the data sources you want to use to a `data/urls.txt` file.
+
+### 2. Collect the Data
+Either add your data sources to the `data/raw` directory, or run the `bun run data collect` command to download the data from the URLs in a `data/urls.txt` file.
+```bash
+bun run data collect
+```
+
+### 3. ETL the Data
+> [!TIP]
+> It's recommended to only include the data you want to use. If we want to include everything, we can just run the command without the `--geoid` flag.
+> ```bash
+> bun run etl
+> ```
+
+Run the `bun run etl` command to import the data into the DuckDB database. For most cases, we're only interested in the `060` (County Subdivision) and `160` (Incorporated Place) GEOIDs.
+```bash
+bun run etl --geoid "^(060|160)0000US"
+```
+
+If the server is actively running, you can run the `--live` flag to import the data into the existing database without restarting the server.
+```bash
+bun run etl --geoid "^(060|160)0000US" --live
+```
+
+### 4. Run the Server
+Run the `bun run server` command to start the server.
+```bash
+bun run server
+```
+
+## :package: Docker
 
 > [!TIP]
-> The port defaults to `3000` if there is no `BETTER_CENSUS_PORT` environment variable set.
+> The port defaults to `3000` if there is no `BETTER_CENSUS_PORT` environment variable set. It's also recommended to mount the `data` directory to persist the data.
 
+### 1. Setup the Container
 ```bash
 docker build -t better-census .
 ```
 
 ```bash
-docker run --name better-census --rm -e BETTER_CENSUS_PORT=3000 -p 3000:3000 better-census
+docker run --name better-census -v bettercensus_data:/app/data -e BETTER_CENSUS_PORT=1776 -p 1776:1776 better-census
+```
+
+### 2. Add Data Sources
+
+```bash
+docker exec -it better-census mv /app/data/urls.example.txt urls.txt
+```
+
+```bash
+docker exec -it better-census bun run data collect
+```
+
+```bash
+docker exec -it better-census bun run etl --geoid "^(060|160)0000US" --live
 ```
 
 ## Usage Example
