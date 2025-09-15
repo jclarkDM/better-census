@@ -67,12 +67,12 @@ bun run server
 docker build -t better-census .
 ```
 
-### 2. Run the Server Container
+### 2. Run the Container
 ```bash
 docker run -d --name better-census -v bettercensus_data:/app/data -e BETTER_CENSUS_PORT=1776 -p 1776:1776 better-census
 ```
 
-### 3. Add Data Sources
+### 3. Add the Default Data Sources
 ```bash
 docker exec -it better-census mv /app/data/urls.example.txt /app/data/urls.txt
 ```
