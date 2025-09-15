@@ -48,8 +48,8 @@ export function getPlaceGeography(geocodedLocation: GeocodedLocation) {
   if (!state) return null;
 
   const isMCDState = stateFipsMap[Number(state) as keyof typeof stateFipsMap].mcd;
-  const incorporatedPlaces = geocodedLocation.PLACES?.filter(isIncorporatedPlace);
-  const CDPs = geocodedLocation.PLACES?.filter(isCDP);
+  const incorporatedPlaces = geocodedLocation.PLACES?.filter(isIncorporatedPlace).map(correctGeography);
+  const CDPs = geocodedLocation.PLACES?.filter(isCDP).map(correctGeography);
   if (isMCDState) return incorporatedPlaces?.at(0) ?? geocodedLocation.COUNTY_SUBDIVISIONS?.at(0) ?? null;
 
   return incorporatedPlaces?.at(0) ?? CDPs?.at(0) ?? null;
@@ -74,4 +74,10 @@ export function isCitySimilar(a: string, b: string) {
   for (const w of A) if (B.has(w)) return true;
 
   return false;
+}
+
+function correctGeography(geography: Geography | undefined) {
+  if (!geography) return geography;
+  if (geography.GEOIDFQ === "1600000US2148000") geography.GEOIDFQ = "1600000US2148006";
+  return geography;
 }
