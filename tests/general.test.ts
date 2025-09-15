@@ -34,7 +34,7 @@ locations.map((location, idx) => {
 
     const recievedTotalPopulation = population[geography.GEOIDFQ]?.B01001_001E!;
     expect(percentDiff(recievedTotalPopulation, location.totalPopulation)).toBeLessThan(0.1);
-    console.log("\n", recievedTotalPopulation.toLocaleString(), "→", location.totalPopulation.toLocaleString());
+    logComparison(recievedTotalPopulation.toLocaleString(), location.totalPopulation.toLocaleString());
   });
 });
 
@@ -45,6 +45,10 @@ locations.map((location, idx) => {
     if (!geography) return;
 
     expect(isCitySimilar(geography.NAMELSAD, location.name)).toBeTrue();
-    console.log("\n", geography.NAMELSAD, "→", location.name);
+    logComparison(geography.NAMELSAD, location.name);
   });
 });
+
+function logComparison(test: string, real: string){
+  console.log("\n", `Test: ${test}`, "\n", `Real: ${real}`);
+}
