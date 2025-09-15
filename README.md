@@ -74,7 +74,7 @@ docker run -d --name better-census -v bettercensus_data:/app/data -e BETTER_CENS
 
 ### 3. Add Data Sources
 ```bash
-docker exec -it better-census mv /app/data/urls.example.txt urls.txt
+docker exec -it better-census mv /app/data/urls.example.txt /app/data/urls.txt
 ```
 
 ```bash
