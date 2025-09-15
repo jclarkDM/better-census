@@ -16,6 +16,8 @@
 - DuckDB for efficient data querying
 - Encoders for converting human-readable keys into Census IDs, e.g. `Census.encoder.housing.median.rent()` -> `"B25064_001E"`
 
+---
+
 ## :wrench: Setup
 This repository includes [files in the releases section](https://github.com/jclarkDM/better-census/releases/tag/data) with common Census demographic data.
 
@@ -31,12 +33,6 @@ bun run data collect
 ```
 
 ### 3. ETL the Data
-> [!TIP]
-> It's recommended to only include the data you want to use. If we want to include everything, we can just run the command without the `--geoid` flag.
-> ```bash
-> bun run etl
-> ```
-
 Run the `bun run etl` command to import the data into the DuckDB database. For most cases, we're only interested in the `060` (County Subdivision) and `160` (Incorporated Place) GEOIDs.
 ```bash
 bun run etl --geoid "^(060|160)0000US"
@@ -47,11 +43,19 @@ If the server is actively running, you can run the `--live` flag to import the d
 bun run etl --geoid "^(060|160)0000US" --live
 ```
 
+> [!TIP]
+> It's recommended to only include the data you want to use. If we want to include everything, we can just run the command without the `--geoid` flag.
+> ```bash
+> bun run etl
+> ```
+
 ### 4. Run the Server
 Run the `bun run server` command to start the server.
 ```bash
 bun run server
 ```
+
+---
 
 ## :package: Docker
 
@@ -80,6 +84,8 @@ docker exec -it better-census bun run data collect
 ```bash
 docker exec -it better-census bun run etl --geoid "^(060|160)0000US" --live
 ```
+
+---
 
 ## Usage Example
 
@@ -110,6 +116,8 @@ const result = await Census.run({
   ],
 });
 ```
+
+---
 
 ## Type safety
 
