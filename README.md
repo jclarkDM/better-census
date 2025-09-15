@@ -23,7 +23,7 @@ This repository includes [files in the releases section](https://github.com/jcla
 
 To use this data, unzip it into the `data/raw` directory. Then, run the ETL script with `bun etl`. This will take a while, but you should get a DuckDB database file in `data/census.db`.
 
-### 1. Add data Sources
+### 1. Add Data Sources
 Add the URLs of the data sources you want to use to a `data/urls.txt` file.
 
 ### 2. Collect the Data
@@ -67,12 +67,12 @@ bun run server
 docker build -t better-census .
 ```
 
+### 2. Run the Server Container
 ```bash
-docker run --name better-census -v bettercensus_data:/app/data -e BETTER_CENSUS_PORT=1776 -p 1776:1776 better-census
+docker run -d --name better-census -v bettercensus_data:/app/data -e BETTER_CENSUS_PORT=1776 -p 1776:1776 better-census
 ```
 
-### 2. Add Data Sources
-
+### 3. Add Data Sources
 ```bash
 docker exec -it better-census mv /app/data/urls.example.txt urls.txt
 ```
