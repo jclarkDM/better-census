@@ -3,11 +3,11 @@
   &nbsp;
   <p>The US Census API is slow, clunky, and unreliable. This is my manifesto.</p>
   <p>
+    <a style="text-decoration: none;" href="https://github.com/jclarkDM/better-census/actions/"><img src="https://img.shields.io/github/actions/workflow/status/jclarkDM/better-census/main.yaml" alt="build status" /></a>
     <a style="text-decoration: none;" href="https://github.com/jclarkDM/better-census/graphs/contributors"><img src="https://img.shields.io/github/contributors/jclarkDM/better-census" alt="contributors" /></a>
     <a style="text-decoration: none;" href=""><img src="https://img.shields.io/github/last-commit/jclarkDM/better-census" alt="last update" /></a>
     <a style="text-decoration: none;" href="https://github.com/jclarkDM/better-census/stargazers"><img src="https://img.shields.io/github/stars/jclarkDM/better-census" alt="stars" /></a>
     <a style="text-decoration: none;" href="https://github.com/jclarkDM/better-census/issues/"><img src="https://img.shields.io/github/issues/jclarkDM/better-census" alt="open issues" /></a>
-    <a style="text-decoration: none;" href="https://github.com/jclarkDM/better-census/blob/master/LICENSE.txt"><img src="https://img.shields.io/github/license/jclarkDM/better-census" alt="license" /></a>
   </p>
 </div>
 
