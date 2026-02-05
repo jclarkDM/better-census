@@ -118,5 +118,25 @@
       "lat": 38.2234412,
       "lng": -85.7056139
     }
+  },
+  {
+    "GEOIDFQ": "1600000US2573440",
+    "name": "Watertown Town",
+    "state": "Massachusetts",
+    "totalPopulation": 35270,
+    "coordinates": {
+      "lat": 42.3709,
+      "lng": -71.1828
+    }
+  },
+  {
+    "GEOIDFQ": "0600000US2502109175",
+    "name": "Brookline",
+    "state": "Massachusetts",
+    "totalPopulation": 63191,
+    "coordinates": {
+      "lat": 42.3318,
+      "lng": -71.1212
+    }
   }
 ]
